@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1010679459602",
+    "project_id": "scamtap-d924c",
+    "storage_bucket": "scamtap-d924c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1010679459602:android:ab43ee9e47f8312d728dcb",
+        "android_client_info": {
+          "package_name": "com.example.scam_tap"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAx08uh2rlj4Ed6GzF6MLaY-VqbGkoYK94"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
