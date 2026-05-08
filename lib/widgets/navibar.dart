@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:scam_tap/pages/message_page.dart';
 import '../pages/lookup_page.dart';
 
 class Navibar extends StatefulWidget {
@@ -29,8 +30,8 @@ class _NavibarState extends State<Navibar>
   final List<Widget> _pages = [
     Center(child: Text('Home')),
     LookupPage(),
-    Center(child: Text('Message')),
-    Center(child: Text('Settings')),
+    MessagePage(),
+    Center(child: Text('Monitor')),
   ];
 
   @override
@@ -50,7 +51,7 @@ class _NavibarState extends State<Navibar>
                 children: [
 
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+                    padding: EdgeInsets.symmetric(horizontal: 4, vertical: 0),
                     clipBehavior: Clip.antiAlias,
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -90,7 +91,7 @@ class _NavibarState extends State<Navibar>
                                 _navItem(Icons.home, 'Home', 0, itemWidth),
                                 _navItem(Icons.call, 'Lookup', 1, itemWidth),
                                 _navItem(Icons.message, 'Message', 2, itemWidth),
-                                _navItem(Icons.settings, 'Settings', 3, itemWidth),
+                                _navItem(Icons.bar_chart_outlined, 'Monitor', 3, itemWidth),
                               ],
                             ),
 
@@ -114,7 +115,7 @@ class _NavibarState extends State<Navibar>
       child: SizedBox(
         width: width,
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 14),
+          padding: EdgeInsets.symmetric(vertical: 13),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
