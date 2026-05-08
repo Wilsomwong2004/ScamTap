@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../pages/lookup_page.dart';
 
 class Navibar extends StatefulWidget {
   const Navibar({super.key});
@@ -27,7 +28,7 @@ class _NavibarState extends State<Navibar>
 
   final List<Widget> _pages = [
     Center(child: Text('Home')),
-    Center(child: Text('Lookup')),
+    LookupPage(),
     Center(child: Text('Message')),
     Center(child: Text('Settings')),
   ];
@@ -49,7 +50,8 @@ class _NavibarState extends State<Navibar>
                 children: [
 
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 15, vertical: 16),
+                    padding: EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+                    clipBehavior: Clip.antiAlias,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(60),
@@ -68,22 +70,19 @@ class _NavibarState extends State<Navibar>
                               duration: Duration(milliseconds: 300),
                               curve: Curves.easeInOut,
                               left: itemWidth * selectionIndex,
-                              top: 0,
-                              bottom: 0,
+                              top: 3,
+                              bottom: 3,
                               width: itemWidth,
-                              child: Padding(
-                                padding: EdgeInsetsGeometry.symmetric(
-                                  horizontal: 0,
-                                  vertical: 0,
-                                ),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.green,
-                                    borderRadius: BorderRadius.circular(30),
+
+
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.green,
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
                                   ),
                                 ),
-                              )
-                            ),
+                            
 
 
                             Row(
@@ -114,18 +113,15 @@ class _NavibarState extends State<Navibar>
       onTap: () => setState(() => selectionIndex = index),
       child: SizedBox(
         width: width,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: isSelected ? Colors.white : Colors.grey),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                color: isSelected ? Colors.white : Colors.grey,
-              ),
-            ),
-          ],
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 14),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: isSelected ? Colors.white : Colors.grey),
+              Text(label, style: TextStyle(fontSize: 11, color: isSelected ? Colors.white : Colors.grey)),
+            ],
+          ),
         ),
       ),
     );
