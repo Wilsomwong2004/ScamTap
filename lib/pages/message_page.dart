@@ -33,6 +33,7 @@ class MessagePage extends StatelessWidget {
       ),
 
       body: SingleChildScrollView(
+        padding: EdgeInsets.only(bottom: 100),
         child: Column(
           children: [
             Padding(
@@ -40,14 +41,15 @@ class MessagePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Verify Number / Link", style: TextStyle(fontSize: 15)),
+                  Text("Verify Message", style: TextStyle(fontSize: 15)),
                   SizedBox(height: 10),
                   TextField(
                     decoration: InputDecoration(
-                      hintText: "+60113223413",
+                      hintText: "Enter text to verify",
                       prefixIcon: Icon(Icons.search),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(30),
+                        
                       ),
                     ),
                   ),

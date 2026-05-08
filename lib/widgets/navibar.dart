@@ -39,7 +39,9 @@ class _NavibarState extends State<Navibar>
     return Scaffold(
       body: Stack(
           children: [
-            _pages[selectionIndex],
+            Positioned.fill(
+              child: _pages[selectionIndex],
+            ),
 
             Positioned(
               bottom: 30,
