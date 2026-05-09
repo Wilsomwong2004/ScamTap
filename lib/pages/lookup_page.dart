@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:scam_tap/widgets/miniprofile.dart';
+import 'package:scam_tap/widgets/scoregauge.dart';
 
 class LookupPage extends StatelessWidget {
   const LookupPage({super.key});
@@ -66,10 +67,21 @@ class LookupPage extends StatelessWidget {
                     SizedBox(height: 10),
                     TextField(
                       decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.white,
                         hintText: "+60113223413",
                         prefixIcon: Icon(Icons.search),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide(width: 1, color: Colors.green),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide(width: 1, color: Colors.green),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide(width: 2, color: Colors.green),
                         ),
                       ),
                     ),
@@ -85,7 +97,7 @@ class LookupPage extends StatelessWidget {
                   width: double.infinity,
                   height: 170,
                   decoration: BoxDecoration(
-                    color: Colors.grey[400],
+                    color: const Color.fromARGB(255, 209, 235, 44),
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
@@ -110,7 +122,7 @@ class LookupPage extends StatelessWidget {
 
                                 Icon(
                                   Icons.warning,
-                                  color: Colors.yellow.shade400,
+                                  color: const Color.fromARGB(255, 0, 0, 0),
                                   size: 20.0,
                                   semanticLabel: 'Text to announce in acce',
                                   ),
@@ -184,21 +196,11 @@ class LookupPage extends StatelessWidget {
 
                       Padding(
                         padding: EdgeInsets.fromLTRB(15, 15, 15, 15),
-                        child: Container(
-                          width: 120,
-                          height: 120,
-                          decoration: BoxDecoration(
-                            color: const Color.fromARGB(255, 255, 255, 255),
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black26,
-                                blurRadius: 10,
-                                offset: Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                        ),
+                        child: SizedBox(
+                        width: 120,
+                        height: 120,
+                        child: Scoregauge(score: 85),
+                      ),
                       ),
                     ],
                   ),
