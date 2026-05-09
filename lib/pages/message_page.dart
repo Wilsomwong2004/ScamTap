@@ -21,7 +21,10 @@ class MessagePage extends StatelessWidget {
             padding: EdgeInsets.only(right: 18),
             child: GestureDetector(
               onTap: () {
-                Miniprofile();
+                Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const Miniprofile()),
+                );
               },
               child: CircleAvatar(
                 backgroundColor: Colors.green,

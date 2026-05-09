@@ -29,7 +29,10 @@ class LookupPage extends StatelessWidget {
             padding: EdgeInsets.only(right: 18),
             child: GestureDetector(
               onTap: () {
-                Miniprofile();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const Miniprofile()),
+                );
               },
               child: CircleAvatar(
                 backgroundColor: const Color.fromARGB(255, 44, 106, 46),
