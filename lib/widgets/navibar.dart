@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:scam_tap/pages/message_page.dart';
 import '../pages/lookup_page.dart';
@@ -56,7 +57,7 @@ class _NavibarState extends State<Navibar>
                     padding: EdgeInsets.symmetric(horizontal: 4, vertical: 0),
                     clipBehavior: Clip.antiAlias,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: CupertinoColors.systemBackground.withValues(alpha: 0.7),
                       borderRadius: BorderRadius.circular(60),
                       boxShadow: [
                         BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4)),
@@ -121,8 +122,8 @@ class _NavibarState extends State<Navibar>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: isSelected ? Colors.white : Colors.grey),
-              Text(label, style: TextStyle(fontSize: 11, color: isSelected ? Colors.white : Colors.grey)),
+              Icon(icon, color: isSelected ? Colors.white : const Color.fromARGB(255, 125, 125, 125)),
+              Text(label, style: TextStyle(fontSize: 11, color: isSelected ? Colors.white : const Color.fromARGB(255, 125, 125, 125))),
             ],
           ),
         ),

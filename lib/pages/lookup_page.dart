@@ -48,10 +48,10 @@ class LookupPage extends StatelessWidget {
         height: double.infinity,
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.green, Colors.white],
+            colors: [Colors.green, const Color.fromARGB(255, 172, 172, 172)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            stops: [0.0, 0.8],
+            stops: [0.0, 1.0],
           ),
         ),
         child: SingleChildScrollView(
@@ -71,9 +71,12 @@ class LookupPage extends StatelessWidget {
                     TextField(
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: const Color.fromARGB(255, 233, 247, 235),
                         hintText: "+60113223413",
-                        prefixIcon: Icon(Icons.search),
+                        prefixIcon: Padding(
+                          padding: const EdgeInsets.fromLTRB(15,0,0,0),
+                          child: Icon(Icons.search),
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(30),
                           borderSide: BorderSide(width: 1, color: Colors.green),
@@ -168,7 +171,6 @@ class LookupPage extends StatelessWidget {
                                       ),
                                     ),
                                   ),
-                                  
                                 ),
 
                                 SizedBox(width: 8),
@@ -221,7 +223,7 @@ class LookupPage extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
-                      color: Colors.grey,
+                      color: const Color.fromARGB(255, 255, 255, 255),
                     ),
                   ),
                 ),
@@ -232,7 +234,7 @@ class LookupPage extends StatelessWidget {
               Row(
                 children: [
                   Padding(
-                    padding: EdgeInsets.fromLTRB(25, 5, 15, 15),
+                    padding: EdgeInsets.fromLTRB(25, 5, 15, 5),
                     child: SizedBox(
                       width: 110,
                       height: 40,
@@ -240,6 +242,9 @@ class LookupPage extends StatelessWidget {
                         onPressed: () {
                           print("clicked!");
                         },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white
+                        ),
                         icon: Icon(Icons.call_sharp),
                         label: Text("Call"),
                       ),
@@ -249,7 +254,7 @@ class LookupPage extends StatelessWidget {
                   // SizedBox(width: 15),
 
                   Padding(
-                    padding: EdgeInsets.fromLTRB(0, 5, 5, 15),
+                    padding: EdgeInsets.fromLTRB(0, 5, 5, 5),
                     child: SizedBox(
                       width: 110,
                       height: 40,
@@ -257,6 +262,9 @@ class LookupPage extends StatelessWidget {
                         onPressed: () {
                           print("clicked!");
                         },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white
+                        ),
                         icon: Icon(Icons.link),
                         label: Text("Link"),
                       ),
@@ -264,46 +272,127 @@ class LookupPage extends StatelessWidget {
                   ),
                 ],
               ),
+              
+              SizedBox(height: 10),
 
               Column(
                 children: [
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 25, vertical: 15),
-                      child: Container(
-                        width: double.infinity,
-                        height: 120,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[400],
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black26,
-                              blurRadius: 10,
-                              offset: Offset(0, 4),
+                    padding: EdgeInsets.fromLTRB(25, 5, 25, 5),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 90,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          print("clicked!");
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromARGB(255, 233, 247, 235),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25),
                           ),
-                        ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                CircleAvatar(
+                                  backgroundColor: const Color.fromARGB(255, 44, 106, 46),
+                                  child: Icon(Icons.person, color: Colors.white),
+                                ),
+
+                                SizedBox(width: 12),
+
+                                Text("012345678", style: TextStyle(fontSize: 14 ),),
+                              ],
+                            ),
+
+                            Container(
+                              child: Row(
+                                children: [
+                                  Container(
+                                      width: 70,
+                                      height: 30,
+                                      alignment: Alignment.center,
+                                      decoration: BoxDecoration(
+                                        color: const Color.fromARGB(255, 78, 114, 84),
+                                        borderRadius: BorderRadius.circular(30),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black26,
+                                            blurRadius: 10,
+                                            offset: Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+
+                                    child: Text(
+                                      "Safe",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                              
+                                  SizedBox(width: 10),
+                              
+                                  Container(
+                                    child: Icon(
+                                      Icons.arrow_forward_ios_rounded,
+                                      weight: 800,
+                                    ),
+                                  )
+                                ]
+                              ),
+                            )
+                            
+                          ]
+                        )
                       ),
                     ),
                   ),
+
+                  // Padding(
+                  //   padding: EdgeInsets.symmetric(horizontal: 25, vertical: 15),
+                  //     child: Container(
+                  //       width: double.infinity,
+                  //       height: 100,
+                  //       decoration: BoxDecoration(
+                  //         color: const Color.fromARGB(255, 233, 247, 235),
+                  //         borderRadius: BorderRadius.circular(20),
+                  //         boxShadow: [
+                  //           BoxShadow(
+                  //             color: Colors.black26,
+                  //             blurRadius: 10,
+                  //             offset: Offset(0, 4),
+                  //         ),
+                  //       ],
+                  //     ),
+                  //   ),
+                  // ),
                 
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 25),
-                      child: Container(
-                        width: double.infinity,
-                        height: 120,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[400],
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black26,
-                              blurRadius: 10,
-                              offset: Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  // Padding(
+                  //   padding: EdgeInsets.symmetric(horizontal: 25),
+                  //     child: Container(
+                  //       width: double.infinity,
+                  //       height: 120,
+                  //       decoration: BoxDecoration(
+                  //         color: Colors.grey[400],
+                  //         borderRadius: BorderRadius.circular(20),
+                  //         boxShadow: [
+                  //           BoxShadow(
+                  //             color: Colors.black26,
+                  //             blurRadius: 10,
+                  //             offset: Offset(0, 4),
+                  //         ),
+                  //       ],
+                  //     ),
+                  //   ),
+                  // ),
 
                   // Padding(
                   //   padding: EdgeInsets.symmetric(horizontal: 25),
