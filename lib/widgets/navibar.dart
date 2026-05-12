@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:scam_tap/pages/message_page.dart';
+import 'package:ScamTap/pages/message_page.dart';
 import '../pages/lookup_page.dart';
 
 class Navibar extends StatefulWidget {

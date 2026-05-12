@@ -1,6 +1,6 @@
 {
-    "name": "scam_tap",
-    "short_name": "scam_tap",
+    "name": "ScamTap",
+    "short_name": "ScamTap",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

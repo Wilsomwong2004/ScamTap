@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "1010679459602",
+    "firebase_url": "https://scamtap-d924c-default-rtdb.asia-southeast1.firebasedatabase.app",
     "project_id": "scamtap-d924c",
     "storage_bucket": "scamtap-d924c.firebasestorage.app"
   },
@@ -9,7 +10,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:1010679459602:android:ab43ee9e47f8312d728dcb",
         "android_client_info": {
-          "package_name": "com.example.scam_tap"
+          "package_name": "com.example.ScamTap"
         }
       },
       "oauth_client": [],

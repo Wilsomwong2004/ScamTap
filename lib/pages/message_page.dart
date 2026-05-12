@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:scam_tap/widgets/miniprofile.dart';
+import 'package:ScamTap/widgets/miniprofile.dart';
 
 class MessagePage extends StatelessWidget {
   const MessagePage({super.key});

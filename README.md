@@ -1,4 +1,4 @@
-# scam_tap
+# ScamTap
 
 A new Flutter project.
 
