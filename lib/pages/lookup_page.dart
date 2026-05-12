@@ -1,8 +1,12 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'package:scam_tap/widgets/miniprofile.dart';
 import 'package:scam_tap/widgets/scoregauge.dart';
 
 class LookupPage extends StatelessWidget {
+  // String _selected = "Call";
+
   const LookupPage({super.key});
 
   @override
@@ -13,7 +17,7 @@ class LookupPage extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Padding(
-          padding: EdgeInsets.only(left: 8),
+          padding: EdgeInsets.only(left: 6),
           child: Text(
             "Lookup",
             style: TextStyle(
@@ -48,7 +52,7 @@ class LookupPage extends StatelessWidget {
         height: double.infinity,
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.green, const Color.fromARGB(255, 172, 172, 172)],
+            colors: [Colors.green, const Color.fromARGB(255, 199, 199, 199)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             stops: [0.0, 1.0],
@@ -62,11 +66,11 @@ class LookupPage extends StatelessWidget {
           child: Column(
             children: [
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 25, vertical: 4),
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Verify Number / Link", style: TextStyle(fontSize: 15, color: Colors.white,)),
+                    Text("Verify Number / Link", style: TextStyle(fontSize: 15, color: Colors.white, fontWeight: FontWeight.w500 )),
                     SizedBox(height: 10),
                     TextField(
                       decoration: InputDecoration(
@@ -98,13 +102,14 @@ class LookupPage extends StatelessWidget {
               SizedBox(height: 15),
 
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 25),
+                padding: EdgeInsets.symmetric(horizontal: 20),
                 child: Container(
                   width: double.infinity,
                   height: 170,
                   decoration: BoxDecoration(
-                    color: const Color.fromARGB(255, 209, 235, 44),
+                    color: const Color.fromRGBO(252, 220, 114, 1),
                     borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Color.fromARGB(255, 248, 195, 72), width: 1),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black26,
@@ -147,7 +152,10 @@ class LookupPage extends StatelessWidget {
 
                             SizedBox(height: 10),
 
-                            Text("High risk! No interact!"),
+                            Text(
+                              "Avoid interaction immediately",
+                              style: TextStyle(fontSize: 13),
+                            ),
 
                             SizedBox(height: 5),
 
@@ -215,7 +223,7 @@ class LookupPage extends StatelessWidget {
               SizedBox(height: 25),
 
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 30),
+                padding: EdgeInsets.symmetric(horizontal: 20),
                 child: SizedBox(
                   width: double.infinity,
                   child: Text(
@@ -231,54 +239,56 @@ class LookupPage extends StatelessWidget {
 
               SizedBox(height: 10),
 
-              Row(
-                children: [
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(25, 5, 15, 5),
-                    child: SizedBox(
-                      width: 110,
-                      height: 40,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          print("clicked!");
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white
-                        ),
-                        icon: Icon(Icons.call_sharp),
-                        label: Text("Call"),
-                      ),
-                    ),
-                  ),
+              FilterSelection(),
 
-                  // SizedBox(width: 15),
+              // Row(
+              //   children: [
+              //     Padding(
+              //       padding: EdgeInsets.fromLTRB(20, 5, 15, 5),
+              //       child: SizedBox(
+              //         width: 110,
+              //         height: 40,
+              //         child: ElevatedButton.icon(
+              //           onPressed: () {
+              //             print("clicked!");
+              //           },
+              //           style: ElevatedButton.styleFrom(
+              //             backgroundColor: Colors.white
+              //           ),
+              //           icon: Icon(Icons.call_sharp),
+              //           label: Text("Call"),
+              //         ),
+              //       ),
+              //     ),
 
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(0, 5, 5, 5),
-                    child: SizedBox(
-                      width: 110,
-                      height: 40,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          print("clicked!");
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white
-                        ),
-                        icon: Icon(Icons.link),
-                        label: Text("Link"),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              //     // SizedBox(width: 15),
+
+              //     Padding(
+              //       padding: EdgeInsets.fromLTRB(0, 5, 5, 5),
+              //       child: SizedBox(
+              //         width: 110,
+              //         height: 40,
+              //         child: ElevatedButton.icon(
+              //           onPressed: () {
+              //             print("clicked!");
+              //           },
+              //           style: ElevatedButton.styleFrom(
+              //             backgroundColor: Colors.white
+              //           ),
+              //           icon: Icon(Icons.link),
+              //           label: Text("Link"),
+              //         ),
+              //       ),
+              //     ),
+              //   ],
+              // ),
               
               SizedBox(height: 10),
 
               Column(
                 children: [
                   Padding(
-                    padding: EdgeInsets.fromLTRB(25, 5, 25, 5),
+                    padding: EdgeInsets.fromLTRB(20, 5, 20, 5),
                     child: SizedBox(
                       width: double.infinity,
                       height: 90,
@@ -313,7 +323,7 @@ class LookupPage extends StatelessWidget {
                               child: Row(
                                 children: [
                                   Container(
-                                      width: 70,
+                                      width: 80,
                                       height: 30,
                                       alignment: Alignment.center,
                                       decoration: BoxDecoration(
@@ -321,9 +331,8 @@ class LookupPage extends StatelessWidget {
                                         borderRadius: BorderRadius.circular(30),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: Colors.black26,
-                                            blurRadius: 10,
-                                            offset: Offset(0, 4),
+                                            color: const Color.fromARGB(255, 41, 92, 42),
+                                            blurRadius: 2,
                                         ),
                                       ],
                                     ),
@@ -418,6 +427,47 @@ class LookupPage extends StatelessWidget {
           ),
         ),
       )
+    );
+  }
+}
+
+class FilterSelection extends StatefulWidget {
+  const FilterSelection({super.key});
+
+  @override
+  State<FilterSelection> createState() => _FilterSelectionState();
+}
+
+class _FilterSelectionState extends State<FilterSelection> {
+  String _selected = "Call";
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: ["Call", "Link"].map((label) {
+        final isActive = _selected == label;
+        return Padding(
+          padding: EdgeInsets.only(right: 8),
+          child: GestureDetector(
+            onTap: () => setState(() => _selected = label),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              decoration: BoxDecoration(
+                color: isActive ? Color.fromARGB(255, 44, 106, 46) : Colors.white,
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(color: Color.fromARGB(255, 44, 106, 46)),
+              ),
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: isActive ? Colors.white : Color.fromARGB(255, 44, 106, 46),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 }

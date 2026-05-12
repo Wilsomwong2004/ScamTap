@@ -15,20 +15,20 @@ class Scoregauge extends StatelessWidget {
         children: [
           PieChart(
             PieChartData(
-              startDegreeOffset: 180,
+              startDegreeOffset: 270,
               sectionsSpace: 0,
               sections: [
                 PieChartSectionData(
                   value: score,
                   color: riskColor(score),
-                  radius: 20,
+                  radius: 15,
                   showTitle: false,
                 ),
 
                 PieChartSectionData(
                   value: 100 - score,
                   color: Colors.grey.shade200,
-                  radius: 20,
+                  radius: 15,
                   showTitle: false,
                 )
               ],
@@ -50,6 +50,7 @@ class Scoregauge extends StatelessWidget {
   Color riskColor(double score) {
     if (score >= 70) return Colors.red;
     if (score >= 40) return Colors.orange;
+    if (score >= 20) return Colors.green;
     return Colors.green;
   }
 }
