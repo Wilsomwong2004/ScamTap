@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:scam_tap/pages/login_page.dart';
 import 'widgets/navibar.dart';
 
 void main() {
@@ -30,9 +31,9 @@ class MyApp extends StatelessWidget {
         //
         // This works for code too, not just values: Most code changes can be
         // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.green),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
       ),
-      home: const Navibar(),
+      home: const LoginPage(),
     );
   }
 }
@@ -73,11 +74,11 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
- return Scaffold(    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-   
+    return Scaffold(
+      //
+      // The Flutter framework has been optimized to make rerunning build methods
+      // fast, so that you can just rebuild anything that needs updating rather
+      // than having to individually change instances of widgets.
       appBar: AppBar(
         // TRY THIS: Try changing the color here to a specific color (to
         // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
@@ -104,7 +105,7 @@ class _MyHomePageState extends State<MyHomePage> {
           // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
           // action in the IDE, or press "p" in the console), to see the
           // wireframe for each widget.
-          mainAxisAlignment: .center,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text('You have pushed the button this many times:'),
             Text(
