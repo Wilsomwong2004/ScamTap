@@ -1,5 +1,4 @@
 import 'dart:ffi';
-
 import 'package:flutter/material.dart';
 import 'package:ScamTap/widgets/animatedhinttextfield.dart';
 import 'package:ScamTap/widgets/miniprofile.dart';
