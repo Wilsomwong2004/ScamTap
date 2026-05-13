@@ -6,6 +6,9 @@ import 'package:flutter/material.dart';
 class ScamreportPage extends StatelessWidget {
   const ScamreportPage({super.key});
 
+  // int phonenumber = ;
+  // String link = ;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -166,7 +169,8 @@ class ScamreportPage extends StatelessWidget {
                             borderRadius: BorderRadius.circular(30),
                           ),
                           side: BorderSide(color: Colors.grey[400]!),
-                          foregroundColor: Colors.black,
+                          foregroundColor: Colors.white,
+                          backgroundColor: const Color.fromARGB(255, 225, 79, 76),
                         ),
                       ),
                     ),
@@ -175,7 +179,7 @@ class ScamreportPage extends StatelessWidget {
                       child: OutlinedButton.icon(
                         onPressed: () {
                           SharePlus.instance.share(
-                            ShareParams(text: 'check out my website https://example.com')
+                            ShareParams(text: 'testing')
                           );
                         },
                         icon: const Icon(Icons.share_outlined, size: 18),
@@ -186,7 +190,8 @@ class ScamreportPage extends StatelessWidget {
                             borderRadius: BorderRadius.circular(30),
                           ),
                           side: BorderSide(color: Colors.grey[400]!),
-                          foregroundColor: Colors.black,
+                          foregroundColor: Colors.white,
+                          backgroundColor: Color.fromARGB(255, 82, 152, 208),
                         ),
                       ),
                     ),
@@ -205,7 +210,8 @@ class ScamreportPage extends StatelessWidget {
                         borderRadius: BorderRadius.circular(30),
                       ),
                       side: BorderSide(color: Colors.grey[400]!),
-                      foregroundColor: Colors.black,
+                      foregroundColor: Colors.white,
+                      backgroundColor: const Color.fromARGB(255, 80, 185, 83),
                     ),
                     child: const Text(
                       "Done",
@@ -213,6 +219,8 @@ class ScamreportPage extends StatelessWidget {
                     ),
                   ),
                 ),
+
+                const SizedBox(height: 10),
               ],
             ),
           ),

@@ -1,9 +1,13 @@
 import 'dart:ffi';
+import 'package:ScamTap/models/search_record_model.dart';
 import 'package:ScamTap/pages/scamreport_page.dart';
+import 'package:ScamTap/services/firestore_service.dart';
 import 'package:flutter/material.dart';
 import 'package:ScamTap/widgets/animatedhinttextfield.dart';
 import 'package:ScamTap/widgets/miniprofile.dart';
 import 'package:ScamTap/widgets/scoregauge.dart';
+
+import '../widgets/scamdetectedcolorcontainer.dart';
 
 class LookupPage extends StatelessWidget {
   // String _selected = "Call";
@@ -150,88 +154,116 @@ class LookupPage extends StatelessWidget {
               
               SizedBox(height: 10),
 
-              Column(
-                children: [
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(20, 5, 20, 5),
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 90,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const ScamreportPage()),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromARGB(255, 233, 247, 235),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(25),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
+              StreamBuilder <List<SearchRecordModel>>(
+                stream: FirestoreService().getSearchHistory(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return CircularProgressIndicator();
+                  }
+
+                  if(!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
+                      child: Text("No record found!", style: TextStyle(color: Colors.white)),
+                    );
+                  }
+
+                  final records = snapshot.data!;
+
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
+                    itemCount: records.length,
+                    itemBuilder: (context, index) {
+                      final record = records[index];
+                      return Padding(
+                        padding: EdgeInsets.fromLTRB(20, 5, 20, 5),
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 90,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const ScamreportPage()),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color.fromARGB(255, 233, 247, 235),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(25),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                CircleAvatar(
-                                  backgroundColor: const Color.fromARGB(255, 44, 106, 46),
-                                  child: Icon(Icons.person, color: Colors.white),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    CircleAvatar(
+                                      backgroundColor: const Color.fromARGB(255, 44, 106, 46),
+                                      child: Icon(Icons.person, color: Colors.white),
+                                    ),
+
+                                    SizedBox(width: 12),
+
+                                    Text(record.value, style: TextStyle(fontSize: 14 ),),
+                                  ],
                                 ),
 
-                                SizedBox(width: 12),
-
-                                Text("012345678", style: TextStyle(fontSize: 14 ),),
-                              ],
-                            ),
-
-                            Container(
-                              child: Row(
-                                children: [
-                                  Container(
-                                      width: 80,
-                                      height: 30,
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        color: const Color.fromARGB(255, 78, 114, 84),
-                                        borderRadius: BorderRadius.circular(30),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: const Color.fromARGB(255, 41, 92, 42),
-                                            blurRadius: 2,
+                                Container(
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                          width: 80,
+                                          height: 30,
+                                          alignment: Alignment.center,
+                                          decoration: BoxDecoration(
+                                            color: const Color.fromARGB(255, 78, 114, 84),
+                                            borderRadius: BorderRadius.circular(30),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: const Color.fromARGB(255, 41, 92, 42),
+                                                blurRadius: 2,
+                                            ),
+                                          ],
                                         ),
-                                      ],
-                                    ),
 
-                                    child: Text(
-                                      "Safe",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
+                                        child: Text(
+                                          record.riskLevel,
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                                       ),
-                                    ),
+                                  
+                                      SizedBox(width: 10),
+                                  
+                                      Container(
+                                        child: Icon(
+                                          Icons.arrow_forward_ios_rounded,
+                                          weight: 800,
+                                        ),
+                                      )
+                                    ]
                                   ),
-                              
-                                  SizedBox(width: 10),
-                              
-                                  Container(
-                                    child: Icon(
-                                      Icons.arrow_forward_ios_rounded,
-                                      weight: 800,
-                                    ),
-                                  )
-                                ]
-                              ),
+                                )
+                                
+                              ]
                             )
-                            
-                          ]
-                        )
-                      ),
-                    ),
-                  ),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                }
+              )
+
+              // Column(
+              //   children: [
+                  
 
                   // Padding(
                   //   padding: EdgeInsets.symmetric(horizontal: 25, vertical: 15),
@@ -289,8 +321,8 @@ class LookupPage extends StatelessWidget {
                   //     ),
                   //   ),
                   // ),
-                ],
-              ),
+              //   ],
+              // ),
             ],
           ),
         ),
@@ -356,141 +388,144 @@ class _FilterSelectionState extends State<FilterSelection> {
 }
 
 
-class ScamDetectedColorContainer extends StatefulWidget {
-  const ScamDetectedColorContainer({super.key});
+// class ScamDetectedColorContainer extends StatefulWidget {
+//   const ScamDetectedColorContainer({super.key});
 
-  @override
-  State<ScamDetectedColorContainer> createState() => _ScamDetectedColorContainerState();
-}
+//   @override
+//   State<ScamDetectedColorContainer> createState() => _ScamDetectedColorContainerState();
+// }
 
-class _ScamDetectedColorContainerState extends State<ScamDetectedColorContainer> {
-  final IndicatorColor = {
-    "Dangerous": Colors.redAccent,
-    "Warning": Color.fromRGBO(252, 220, 114, 1),
-    "Safe": Colors.greenAccent,
-  };
+// class _ScamDetectedColorContainerState extends State<ScamDetectedColorContainer> {
+//   final IndicatorColor = {
+//     "Dangerous": Colors.redAccent,
+//     "Warning": Color.fromRGBO(252, 220, 114, 1),
+//     "Safe": Colors.greenAccent,
+//   };
   
-  String _currentStatus = "Warning";
+//   String _currentStatus = "Warning";
   
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        width: double.infinity,
-        height: 170,
-        decoration: BoxDecoration(
-          color: IndicatorColor[_currentStatus],
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Color.fromARGB(255, 248, 195, 72), width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 10,
-              offset: Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(20, 20, 5, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Row(
-                    children: [
+//   @override
+//   Widget build(BuildContext context) {
+//     return Padding(
+//       padding: EdgeInsets.symmetric(horizontal: 20),
+//       child: Container(
+//         width: double.infinity,
+//         height: 170,
+//         decoration: BoxDecoration(
+//           color: IndicatorColor[_currentStatus],
+//           borderRadius: BorderRadius.circular(20),
+//           border: Border.all(color: Color.fromARGB(255, 248, 195, 72), width: 1),
+//           boxShadow: [
+//             BoxShadow(
+//               color: Colors.black26,
+//               blurRadius: 10,
+//               offset: Offset(0, 4),
+//             ),
+//           ],
+//         ),
+//         child: Row(
+//           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//           crossAxisAlignment: CrossAxisAlignment.center,
+//           children: [
+//             Padding(
+//               padding: EdgeInsets.fromLTRB(20, 20, 5, 20),
+//               child: Column(
+//                 crossAxisAlignment: CrossAxisAlignment.start,
+//                 mainAxisAlignment: MainAxisAlignment.spaceAround,
+//                 children: [
+//                   Row(
+//                     children: [
 
-                      Icon(
-                        Icons.warning,
-                        color: const Color.fromARGB(255, 0, 0, 0),
-                        size: 20.0,
-                        semanticLabel: 'Text to announce in acce',
-                        ),
+//                       Icon(
+//                         Icons.warning,
+//                         color: const Color.fromARGB(255, 0, 0, 0),
+//                         size: 20.0,
+//                         semanticLabel: 'Text to announce in acce',
+//                         ),
                       
-                      SizedBox(width: 10),
+//                       SizedBox(width: 10),
 
-                      Text(
-                        "Scam Detected",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
+//                       Text(
+//                         "Scam Detected",
+//                         style: TextStyle(
+//                           fontSize: 16,
+//                           fontWeight: FontWeight.bold,
+//                         ),
+//                       ),
+//                     ],
+//                   ),
 
-                  SizedBox(height: 10),
+//                   SizedBox(height: 10),
 
-                  Text(
-                    "Avoid interaction immediately",
-                    style: TextStyle(fontSize: 13),
-                  ),
+//                   Text(
+//                     "Avoid interaction immediately",
+//                     style: TextStyle(fontSize: 13),
+//                   ),
 
-                  SizedBox(height: 5),
+//                   SizedBox(height: 5),
 
-                  Row(
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 0,
-                          vertical: 10,
-                        ),
-                        child: SizedBox(
-                          width: 130,
-                          height: 35,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              print("clicked!");
-                            },
-                            child: Text(
-                              "Check Report",
-                              style: TextStyle(fontSize: 12),
-                            ),
-                          ),
-                        ),
-                      ),
+//                   Row(
+//                     children: [
+//                       Padding(
+//                         padding: EdgeInsets.symmetric(
+//                           horizontal: 0,
+//                           vertical: 10,
+//                         ),
+//                         child: SizedBox(
+//                           width: 130,
+//                           height: 35,
+//                           child: ElevatedButton(
+//                             onPressed: () {
+//                               Navigator.push(
+//                                 context,
+//                                 MaterialPageRoute(builder: (context) => const ScamreportPage()),
+//                               );
+//                             },
+//                             child: Text(
+//                               "Check Report",
+//                               style: TextStyle(fontSize: 12),
+//                             ),
+//                           ),
+//                         ),
+//                       ),
 
-                      SizedBox(width: 8),
+//                       SizedBox(width: 8),
                       
-                      SizedBox(
-                        width: 35,
-                        height: 35,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            print("clicked!");
-                          },
-                          style: ElevatedButton.styleFrom(
-                            padding: EdgeInsets.zero,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                          ),
-                          child: Icon(Icons.report, size: 18),
-                        ),
-                      ),
-                    ],
-                  ),
+//                       SizedBox(
+//                         width: 35,
+//                         height: 35,
+//                         child: ElevatedButton(
+//                           onPressed: () {
+//                             print("clicked!");
+//                           },
+//                           style: ElevatedButton.styleFrom(
+//                             padding: EdgeInsets.zero,
+//                             shape: RoundedRectangleBorder(
+//                               borderRadius: BorderRadius.circular(30),
+//                             ),
+//                           ),
+//                           child: Icon(Icons.report, size: 18),
+//                         ),
+//                       ),
+//                     ],
+//                   ),
 
-                  // SizedBox(width: 10),
-                ],
-              ),
-            ),
+//                   // SizedBox(width: 10),
+//                 ],
+//               ),
+//             ),
 
-            Padding(
-              padding: EdgeInsets.fromLTRB(15, 15, 15, 15),
-              child: SizedBox(
-              width: 120,
-              height: 120,
-              child: Scoregauge(score: 85),
-            ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+//             Padding(
+//               padding: EdgeInsets.fromLTRB(15, 15, 15, 15),
+//               child: SizedBox(
+//               width: 120,
+//               height: 120,
+//               child: Scoregauge(score: 85),
+//             ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }

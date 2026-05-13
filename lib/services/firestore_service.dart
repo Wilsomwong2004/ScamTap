@@ -6,7 +6,7 @@ class FirestoreService {
   final _db = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
 
-  String get _uid => _auth.currentUser!.uid;
+  String? get _uid => _auth.currentUser?.uid;
 
   Future<void> saveSearchRecord({
     required String type,
@@ -32,6 +32,8 @@ class FirestoreService {
       detail: detail,
     );
 
+    if (_uid == null) return;
+
     await _db
         .collection('usersData')
         .doc(_uid)
@@ -40,6 +42,8 @@ class FirestoreService {
   }
 
   Stream<List<SearchRecordModel>> getSearchHistory() {
+    if (_uid == null) return Stream.value([]);
+    
     return _db
         .collection('usersData')
         .doc(_uid)
