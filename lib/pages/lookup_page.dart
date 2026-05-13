@@ -1,4 +1,5 @@
 import 'dart:ffi';
+import 'package:ScamTap/pages/scamreport_page.dart';
 import 'package:flutter/material.dart';
 import 'package:ScamTap/widgets/animatedhinttextfield.dart';
 import 'package:ScamTap/widgets/miniprofile.dart';
@@ -79,7 +80,7 @@ class LookupPage extends StatelessWidget {
 
               SizedBox(height: 15),
 
-              ScamDetectdColorContainer(),
+              ScamDetectedColorContainer(),
 
               SizedBox(height: 25),
 
@@ -158,7 +159,10 @@ class LookupPage extends StatelessWidget {
                       height: 90,
                       child: ElevatedButton(
                         onPressed: () {
-                          print("clicked!");
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const ScamreportPage()),
+                          );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color.fromARGB(255, 233, 247, 235),
@@ -352,14 +356,14 @@ class _FilterSelectionState extends State<FilterSelection> {
 }
 
 
-class ScamDetectdColorContainer extends StatefulWidget {
-  const ScamDetectdColorContainer({super.key});
+class ScamDetectedColorContainer extends StatefulWidget {
+  const ScamDetectedColorContainer({super.key});
 
   @override
-  State<ScamDetectdColorContainer> createState() => _ScamDetectdColorContainerState();
+  State<ScamDetectedColorContainer> createState() => _ScamDetectedColorContainerState();
 }
 
-class _ScamDetectdColorContainerState extends State<ScamDetectdColorContainer> {
+class _ScamDetectedColorContainerState extends State<ScamDetectedColorContainer> {
   final IndicatorColor = {
     "Dangerous": Colors.redAccent,
     "Warning": Color.fromRGBO(252, 220, 114, 1),
