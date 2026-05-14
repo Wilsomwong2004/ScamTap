@@ -40,6 +40,7 @@ dependencies:
   http: ^1.6.0
   firebase_auth: ^6.5.0
   share_plus: ^13.1.0
+  flutter_dotenv: ^6.0.1
 
 dev_dependencies:
   flutter_test:
@@ -67,6 +68,7 @@ flutter:
 
   assets:
     - assets/images/scamtap_logo.png
+    - .env
 
 flutter_launcher_icons:
     android: true

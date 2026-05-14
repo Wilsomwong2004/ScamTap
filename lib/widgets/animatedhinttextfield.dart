@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:ScamTap/models/scam_model.dart';
 import 'package:flutter/material.dart';
 
 class AnimatedHintTextField extends StatefulWidget {
@@ -15,6 +16,9 @@ class _AnimatedHintTextFieldState extends State<AnimatedHintTextField> {
     "https://google.com/link",
   ];
 
+  final TextEditingController _controller = TextEditingController();
+  bool _isLoading = false;
+  Map<String, dynamic>? _result;
   int _currentIndex = 0;
   Timer? _timer;
 
@@ -30,13 +34,33 @@ class _AnimatedHintTextFieldState extends State<AnimatedHintTextField> {
 
   @override
   void dispose() {
+    _controller.dispose();
     _timer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _onSubmit(String value) async {
+    if (value.trim().isEmpty) return;
+
+    setState(() {
+      _isLoading = true;
+      _result = null;
+    });
+
+    final data = await fetchData(value.trim());
+
+    setState(() {
+      _isLoading = false;
+      _result = data;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return TextField(
+      controller: _controller,
+      onSubmitted: _onSubmit,
+      textInputAction: TextInputAction.search,
       decoration: InputDecoration(
         filled: true,
         fillColor: const Color.fromARGB(255, 233, 247, 235),
@@ -63,6 +87,11 @@ class _AnimatedHintTextFieldState extends State<AnimatedHintTextField> {
           padding: EdgeInsets.fromLTRB(15, 0, 0, 0),
           child: Icon(Icons.search),
         ),
+        suffixIcon: _isLoading?
+        const Padding(
+          padding: EdgeInsets.all(12),
+          child: CircularProgressIndicator(strokeWidth: 2),)
+          : null,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
           borderSide: const BorderSide(width: 1, color: Colors.green),

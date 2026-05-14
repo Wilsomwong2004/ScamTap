@@ -1,3 +1,4 @@
+import 'package:ScamTap/models/scam_model.dart';
 import 'package:ScamTap/pages/scamreport_page.dart';
 import 'package:ScamTap/widgets/scoregauge.dart';
 import 'package:flutter/material.dart';
@@ -16,7 +17,7 @@ class _ScamDetectedColorContainerState extends State<ScamDetectedColorContainer>
     "Safe": Colors.greenAccent,
   };
   
-  String _currentStatus = "Warning";
+  String _currentStatus = "Safe";
   
   @override
   Widget build(BuildContext context) {
