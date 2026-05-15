@@ -74,7 +74,9 @@ flutter_launcher_icons:
     android: true
     ios: true
     image_path: "assets/images/scamtap_logo.png"
-    adaptive_icon_background: "#ffffff"
+
+    adaptive_icon_background: "#E8FFF4"
+    adaptive_icon_foreground: "assets/icon/foreground.png"
 
   # To add assets to your application, add an assets section, like this:
   # assets:

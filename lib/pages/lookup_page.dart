@@ -9,13 +9,20 @@ import 'package:ScamTap/widgets/scoregauge.dart';
 
 import '../widgets/scamdetectedcolorcontainer.dart';
 
-class LookupPage extends StatelessWidget {
-  // String _selected = "Call";
-
+class LookupPage extends StatefulWidget {
   const LookupPage({super.key});
 
   @override
+  State<LookupPage> createState() => _LookupPageState();
+}
+
+class _LookupPageState extends State<LookupPage> {
+  bool _showResult = false;
+
+  @override
   Widget build(BuildContext context) {
+    bool _showResult = false;
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -77,14 +84,25 @@ class LookupPage extends StatelessWidget {
                   children: [
                     Text("Verify Number / Link", style: TextStyle(fontSize: 15, color: Colors.white, fontWeight: FontWeight.w500 )),
                     SizedBox(height: 10),
-                    AnimatedHintTextField(),
+                    AnimatedHintTextField(
+                      onResultRecieved: (bool hasResult) {
+                        setState(() {
+                          _showResult = hasResult;
+                        }
+                        );
+                      }
+                    ),
                   ],
                 ),
               ),
 
               SizedBox(height: 15),
 
-              ScamDetectedColorContainer(),
+              AnimatedSwitcher(
+                duration: Duration(milliseconds: 400),
+                child: _showResult
+                  ? ScamDetectedColorContainer(key: ValueKey('result')) : SizedBox.shrink(key: ValueKey('empty')),
+              ),
 
               SizedBox(height: 25),
 
