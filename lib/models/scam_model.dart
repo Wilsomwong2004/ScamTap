@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_ai/firebase_ai.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
@@ -81,7 +83,7 @@ Future<Map<String, dynamic>> fetchData(String value) async {
       final virustotalUrlResponse = await http.post(
         Uri.parse("https://www.virustotal.com/api/v3/urls"),
         headers: {
-          "x-apikey"     : virustotalAPI,
+          "x-apikey"     : "virustotalAPI",
           "Content-Type" : "application/x-www-form-urlencoded",
         },
         body: "url=$value",
@@ -89,14 +91,16 @@ Future<Map<String, dynamic>> fetchData(String value) async {
 
       if (virustotalUrlResponse.statusCode != 200) {
         log("VirusTotal submit error: ${virustotalUrlResponse.statusCode}");
+        result['error'] = 'VirusTotal submit failed: ${virustotalUrlResponse.statusCode}';
+        return result;
       }
 
       final submitData = jsonDecode(virustotalUrlResponse.body);
       final analysisId = submitData['data']['id'];
-      log("VirusTotal Analysis ID: $analysisId");
+      print("VirusTotal Analysis ID: $analysisId");
 
       if (virustotalUrlResponse.statusCode == 200) {
-        result['numverify'] = jsonDecode(virustotalUrlResponse.body);
+        result['virustotal'] = jsonDecode(virustotalUrlResponse.body);
         print("Virustotal: ${result['virustotal']}");
       }
 
@@ -108,11 +112,11 @@ Future<Map<String, dynamic>> fetchData(String value) async {
     );
 
     if (reportResponse.statusCode == 200) {
-      final reportData  = jsonDecode(reportResponse.body);
-      final stats       = reportData['data']['attributes']['stats'];
+      final reportData = jsonDecode(reportResponse.body);
+      final stats = reportData['data']['attributes']['stats'];
 
-      result['virustotal']          = stats;
-      result['virustotal_flagged']  = (stats['malicious'] ?? 0) > 0;
+      result['virustotal'] = stats;
+      result['virustotal_flagged'] = (stats['malicious'] ?? 0) > 0;
 
       log("VirusTotal stats: $stats");
     }
@@ -141,7 +145,6 @@ Future<Map<String, dynamic>> fetchData(String value) async {
   }
 
   await _scamAnalysis(value, result);
-
   await _saveToFirebase(value, result);
 
   return result;
@@ -149,7 +152,73 @@ Future<Map<String, dynamic>> fetchData(String value) async {
 }
 
 Future<void> _scamAnalysis(String value, Map<String, dynamic> result) async {
-  
+
+  bool isValidNumber = result['numverify']?['valid'] ?? false;
+  bool isFraud       = result['penipumy']?['fraud']  ?? false;
+  bool isSpam        = result['penipumy']?['spam']   ?? false;
+  int  policeReports = result['penipumy']?['police_report_count'] ?? 0;
+
+  try {
+    final model = FirebaseAI.googleAI().templateGenerativeModel();
+
+    final String type = result['type'] ?? 'message';
+    final String extraData = type == 'phone'
+        ? jsonEncode({
+            'numverify' : result['numverify'] ?? {},
+            'penipumy'  : result['penipumy']  ?? {},
+          })
+        : jsonEncode(result['virustotal'] ?? {});
+
+    final response = await model.generateContent(
+      'scam-analysis-v1',
+      inputs: {
+        'type'          : type,
+        'value'         : value,
+        'isValid'       : isValidNumber.toString(),
+        'isFraud'       : isFraud.toString(),
+        'isSpam'        : isSpam.toString(),
+        'policeReports' : policeReports.toString(),
+        'extraData'     : extraData,
+      },
+    );
+
+    final aiText = response.text ?? '';
+    log("AI Raw: $aiText");
+
+    final cleanJson = aiText
+        .replaceAll('```json', '')
+        .replaceAll('```', '')
+        .trim();
+
+    final aiJson = jsonDecode(cleanJson);
+    result['ai_analysis'] = aiJson;
+
+    final int aiRiskScore = (aiJson['risk_score'] as num?)?.toInt() ?? 50;
+    result['risk_score']  = aiRiskScore;
+
+    log("AI Risk Score : $aiRiskScore / 100");
+    log("AI Analysis   : $aiJson");
+
+  } catch (e) {
+    log("AI exception: $e");
+
+    int fallbackScore = 10;
+    if (!isValidNumber) fallbackScore += 10;
+    if (isSpam)         fallbackScore += 20;
+    if (isFraud)        fallbackScore += 35;
+    fallbackScore += (policeReports * 5).clamp(0, 25);
+    result['risk_score'] = fallbackScore.clamp(1, 100);
+  }
+
+  bool aiSaysScam = result['ai_analysis']?['is_scam'] ?? false;
+  int  riskScore = (result['risk_score'] as num?)?.toInt() ?? 50;
+  bool finalIsScam = isFraud || isSpam || policeReports > 0 || aiSaysScam || riskScore >= 60;
+
+  result['is_scam'] = finalIsScam;
+  result['verdict'] = finalIsScam ? 'SCAM' : 'SAFE';
+
+  log("Final verdict : ${result['verdict']}");
+  log("Final score : $riskScore / 100");
 }
 
 Future<void> _saveToFirebase(String value, Map<String, dynamic> result) async {
@@ -169,9 +238,7 @@ Future<void> _saveToFirebase(String value, Map<String, dynamic> result) async {
       await db.collection('scam_checks').add({
         'value'      : value,
         'type'       : result['type'],
-        'numverify'  : result['numverify']  ?? null,
-        'penipumy'   : result['penipumy']   ?? null,
-        'is_scam'    : result['penipumy']?['is_scam'] ?? false,
+        'virustotal'  : result['virustotal']  ?? null,
         'checked_at' : FieldValue.serverTimestamp(),
       });
     } else {

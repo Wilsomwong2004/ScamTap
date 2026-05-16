@@ -23,7 +23,6 @@ class _LookupPageState extends State<LookupPage> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -90,62 +89,29 @@ class _LookupPageState extends State<LookupPage> {
                     ),
                     SizedBox(height: 10),
                     AnimatedHintTextField(
-                      onResultRecieved: (bool hasResult, Map<String, dynamic>? data) {
-                        setState(() {
-                          _showResult = hasResult;
-                          _resultData = data;
-                        }
-                        );
-                      }
+                      onResultRecieved:
+                          (bool hasResult, Map<String, dynamic>? data) {
+                            setState(() {
+                              _showResult = hasResult;
+                              _resultData = data;
+                            });
+                          },
                     ),
                   ],
                 ),
               ),
 
-              SizedBox(height: 15),
-
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // Navigate to ScanningPage
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ScanningPage(
-                            inputText: "0123456789",
-                            inputType: "Call",
-                          ),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      padding: EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                    ),
-                    child: Text(
-                      "Start Scan",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
 
               SizedBox(height: 15),
 
               AnimatedSwitcher(
                 duration: Duration(milliseconds: 400),
                 child: _showResult
-                  ? ScamDetectedColorContainer(key: ValueKey('result'), result: _resultData) : SizedBox.shrink(key: ValueKey('empty')),
+                    ? ScamDetectedColorContainer(
+                        key: ValueKey('result'),
+                        result: _resultData,
+                      )
+                    : SizedBox.shrink(key: ValueKey('empty')),
               ),
 
               SizedBox(height: 25),

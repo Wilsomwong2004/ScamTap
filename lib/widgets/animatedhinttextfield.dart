@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:ScamTap/models/scam_model.dart';
+import 'package:ScamTap/pages/scanning_page.dart';
 import 'package:flutter/material.dart';
 
 class AnimatedHintTextField extends StatefulWidget {
@@ -20,6 +21,7 @@ class _AnimatedHintTextFieldState extends State<AnimatedHintTextField> {
 
   final TextEditingController _controller = TextEditingController();
   bool _isLoading = false;
+  bool _hasError = false;
   Map<String, dynamic>? _result;
   int _currentIndex = 0;
   Timer? _timer;
@@ -51,6 +53,16 @@ class _AnimatedHintTextFieldState extends State<AnimatedHintTextField> {
 
     widget.onResultRecieved?.call(false, null);
 
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ScanningPage(
+          inputText: value.trim(),
+          inputType: "Call",
+        ),
+      ),
+    );
+
     final data = await fetchData(value.trim());
 
     setState(() {
@@ -68,6 +80,9 @@ class _AnimatedHintTextFieldState extends State<AnimatedHintTextField> {
     return TextField(
       controller: _controller,
       onSubmitted: _onSubmit,
+      onChanged: (val) {
+        if (_hasError) setState(() => _hasError = false);
+      },
       textInputAction: TextInputAction.search,
       decoration: InputDecoration(
         filled: true,
@@ -88,39 +103,93 @@ class _AnimatedHintTextFieldState extends State<AnimatedHintTextField> {
           child: Text(
             _hints[_currentIndex],
             key: ValueKey<String>(_hints[_currentIndex]),
-            style: const TextStyle(color: Color.fromARGB(255, 108, 107, 107), fontWeight:FontWeight.w500),
+            style: const TextStyle(
+              color: Color.fromARGB(255, 108, 107, 107),
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
         prefixIcon: const Padding(
           padding: EdgeInsets.fromLTRB(15, 0, 0, 0),
           child: Icon(Icons.search),
         ),
-        suffixIcon: _isLoading?
-        const Padding(
-          padding: EdgeInsets.all(12),
-          child: CircularProgressIndicator(strokeWidth: 2),)
-          : null,
+        suffixIcon:
+        _isLoading
+            ? const Padding(
+                padding: EdgeInsets.all(12),
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Padding(
+                padding: const EdgeInsets.all(6),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(30),
+                  onTap: () {
+                    final input = _controller.text.trim();
+                    final isPhone = RegExp(r'^[0-9+\-\s()]+$').hasMatch(input);
+                    final isUrl = input.startsWith('http') || input.startsWith('www');
+
+                    if (input.isEmpty || (!isPhone && !isUrl)) {
+                      setState(() => _hasError = true);
+                      return;
+                    }
+
+                    setState(() => _hasError = false);
+
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ScanningPage(
+                          inputText: input,
+                          inputType: isPhone ? "Call" : "URL",
+                        ),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: const BoxDecoration(
+                      color: Colors.green,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.arrow_forward,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
-          borderSide: const BorderSide(width: 1, color: Colors.green),
+          borderSide: BorderSide(
+            width: 1,
+            color: _hasError ? Colors.red : Colors.transparent,
+          ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
-          borderSide: const BorderSide(width: 1, color: Colors.green),
+          borderSide: BorderSide(
+            width: 1,
+            color: _hasError ? Colors.red : Colors.green,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
-          borderSide: const BorderSide(width: 2, color: Colors.green),
+          borderSide: BorderSide(
+            width: 2,
+            color: _hasError ? Colors.red : Colors.green,
+          ),
         ),
       ),
     );
   }
-}
 
-void _checkValue(value, dynamic widget) async {
-  final result = await fetchData(value);
+  void _checkValue(value, dynamic widget) async {
+    final result = await fetchData(value);
 
-if (result != null) {
-    widget.onResultReceived?.call(true);
+    if (result != null) {
+      widget.onResultReceived?.call(true);
+    }
   }
 }
