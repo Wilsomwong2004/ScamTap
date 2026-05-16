@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:ScamTap/widgets/animatedhinttextfield.dart';
 import 'package:ScamTap/widgets/miniprofile.dart';
 import 'package:ScamTap/widgets/scoregauge.dart';
+import 'package:ScamTap/pages/scanning_page.dart';
 
 import '../widgets/scamdetectedcolorcontainer.dart';
 
@@ -71,10 +72,7 @@ class _LookupPageState extends State<LookupPage> {
           ),
         ),
         child: SingleChildScrollView(
-          padding: EdgeInsets.only(
-              top: kToolbarHeight + 55,
-              bottom: 100,
-            ),
+          padding: EdgeInsets.only(top: kToolbarHeight + 55, bottom: 100),
           child: Column(
             children: [
               Padding(
@@ -82,17 +80,61 @@ class _LookupPageState extends State<LookupPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Verify Number / Link", style: TextStyle(fontSize: 15, color: Colors.white, fontWeight: FontWeight.w500 )),
+                    Text(
+                      "Verify Number / Link",
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                     SizedBox(height: 10),
                     AnimatedHintTextField(
                       onResultRecieved: (bool hasResult) {
                         setState(() {
                           _showResult = hasResult;
-                        }
-                        );
-                      }
+                        });
+                      },
                     ),
                   ],
+                ),
+              ),
+
+              SizedBox(height: 15),
+
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      // Navigate to ScanningPage
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ScanningPage(
+                            inputText: "0123456789",
+                            inputType: "Call",
+                          ),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      padding: EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                    child: Text(
+                      "Start Scan",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
                 ),
               ),
 
@@ -101,7 +143,8 @@ class _LookupPageState extends State<LookupPage> {
               AnimatedSwitcher(
                 duration: Duration(milliseconds: 400),
                 child: _showResult
-                  ? ScamDetectedColorContainer(key: ValueKey('result')) : SizedBox.shrink(key: ValueKey('empty')),
+                    ? ScamDetectedColorContainer(key: ValueKey('result'))
+                    : SizedBox.shrink(key: ValueKey('empty')),
               ),
 
               SizedBox(height: 25),
@@ -124,7 +167,10 @@ class _LookupPageState extends State<LookupPage> {
               SizedBox(height: 10),
 
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20 , vertical: 0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 0,
+                ),
                 child: FilterSelection(),
               ),
 
@@ -169,20 +215,25 @@ class _LookupPageState extends State<LookupPage> {
               //     ),
               //   ],
               // ),
-              
               SizedBox(height: 10),
 
-              StreamBuilder <List<SearchRecordModel>>(
+              StreamBuilder<List<SearchRecordModel>>(
                 stream: FirestoreService().getSearchHistory(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return CircularProgressIndicator();
                   }
 
-                  if(!snapshot.hasData || snapshot.data!.isEmpty) {
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
-                      child: Text("No record found!", style: TextStyle(color: Colors.white)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 28,
+                        vertical: 20,
+                      ),
+                      child: Text(
+                        "No record found!",
+                        style: TextStyle(color: Colors.white),
+                      ),
                     );
                   }
 
@@ -203,11 +254,18 @@ class _LookupPageState extends State<LookupPage> {
                             onPressed: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => const ScamreportPage()),
+                                MaterialPageRoute(
+                                  builder: (context) => const ScamreportPage(),
+                                ),
                               );
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color.fromARGB(255, 233, 247, 235),
+                              backgroundColor: const Color.fromARGB(
+                                255,
+                                233,
+                                247,
+                                235,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(25),
                               ),
@@ -219,13 +277,24 @@ class _LookupPageState extends State<LookupPage> {
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   children: [
                                     CircleAvatar(
-                                      backgroundColor: const Color.fromARGB(255, 44, 106, 46),
-                                      child: Icon(Icons.person, color: Colors.white),
+                                      backgroundColor: const Color.fromARGB(
+                                        255,
+                                        44,
+                                        106,
+                                        46,
+                                      ),
+                                      child: Icon(
+                                        Icons.person,
+                                        color: Colors.white,
+                                      ),
                                     ),
 
                                     SizedBox(width: 12),
 
-                                    Text(record.value, style: TextStyle(fontSize: 14 ),),
+                                    Text(
+                                      record.value,
+                                      style: TextStyle(fontSize: 14),
+                                    ),
                                   ],
                                 ),
 
@@ -233,16 +302,28 @@ class _LookupPageState extends State<LookupPage> {
                                   child: Row(
                                     children: [
                                       Container(
-                                          width: 80,
-                                          height: 30,
-                                          alignment: Alignment.center,
-                                          decoration: BoxDecoration(
-                                            color: const Color.fromARGB(255, 78, 114, 84),
-                                            borderRadius: BorderRadius.circular(30),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: const Color.fromARGB(255, 41, 92, 42),
-                                                blurRadius: 2,
+                                        width: 80,
+                                        height: 30,
+                                        alignment: Alignment.center,
+                                        decoration: BoxDecoration(
+                                          color: const Color.fromARGB(
+                                            255,
+                                            78,
+                                            114,
+                                            84,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            30,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: const Color.fromARGB(
+                                                255,
+                                                41,
+                                                92,
+                                                42,
+                                              ),
+                                              blurRadius: 2,
                                             ),
                                           ],
                                         ),
@@ -256,95 +337,93 @@ class _LookupPageState extends State<LookupPage> {
                                           ),
                                         ),
                                       ),
-                                  
+
                                       SizedBox(width: 10),
-                                  
+
                                       Container(
                                         child: Icon(
                                           Icons.arrow_forward_ios_rounded,
                                           weight: 800,
                                         ),
-                                      )
-                                    ]
+                                      ),
+                                    ],
                                   ),
-                                )
-                                
-                              ]
-                            )
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       );
                     },
                   );
-                }
-              )
+                },
+              ),
 
               // Column(
               //   children: [
-                  
 
-                  // Padding(
-                  //   padding: EdgeInsets.symmetric(horizontal: 25, vertical: 15),
-                  //     child: Container(
-                  //       width: double.infinity,
-                  //       height: 100,
-                  //       decoration: BoxDecoration(
-                  //         color: const Color.fromARGB(255, 233, 247, 235),
-                  //         borderRadius: BorderRadius.circular(20),
-                  //         boxShadow: [
-                  //           BoxShadow(
-                  //             color: Colors.black26,
-                  //             blurRadius: 10,
-                  //             offset: Offset(0, 4),
-                  //         ),
-                  //       ],
-                  //     ),
-                  //   ),
-                  // ),
-                
-                  // Padding(
-                  //   padding: EdgeInsets.symmetric(horizontal: 25),
-                  //     child: Container(
-                  //       width: double.infinity,
-                  //       height: 120,
-                  //       decoration: BoxDecoration(
-                  //         color: Colors.grey[400],
-                  //         borderRadius: BorderRadius.circular(20),
-                  //         boxShadow: [
-                  //           BoxShadow(
-                  //             color: Colors.black26,
-                  //             blurRadius: 10,
-                  //             offset: Offset(0, 4),
-                  //         ),
-                  //       ],
-                  //     ),
-                  //   ),
-                  // ),
+              // Padding(
+              //   padding: EdgeInsets.symmetric(horizontal: 25, vertical: 15),
+              //     child: Container(
+              //       width: double.infinity,
+              //       height: 100,
+              //       decoration: BoxDecoration(
+              //         color: const Color.fromARGB(255, 233, 247, 235),
+              //         borderRadius: BorderRadius.circular(20),
+              //         boxShadow: [
+              //           BoxShadow(
+              //             color: Colors.black26,
+              //             blurRadius: 10,
+              //             offset: Offset(0, 4),
+              //         ),
+              //       ],
+              //     ),
+              //   ),
+              // ),
 
-                  // Padding(
-                  //   padding: EdgeInsets.symmetric(horizontal: 25),
-                  //     child: Container(
-                  //       width: double.infinity,
-                  //       height: 120,
-                  //       decoration: BoxDecoration(
-                  //         color: Colors.grey[400],
-                  //         borderRadius: BorderRadius.circular(20),
-                  //         boxShadow: [
-                  //           BoxShadow(
-                  //             color: Colors.black26,
-                  //             blurRadius: 10,
-                  //             offset: Offset(0, 4),
-                  //         ),
-                  //       ],
-                  //     ),
-                  //   ),
-                  // ),
+              // Padding(
+              //   padding: EdgeInsets.symmetric(horizontal: 25),
+              //     child: Container(
+              //       width: double.infinity,
+              //       height: 120,
+              //       decoration: BoxDecoration(
+              //         color: Colors.grey[400],
+              //         borderRadius: BorderRadius.circular(20),
+              //         boxShadow: [
+              //           BoxShadow(
+              //             color: Colors.black26,
+              //             blurRadius: 10,
+              //             offset: Offset(0, 4),
+              //         ),
+              //       ],
+              //     ),
+              //   ),
+              // ),
+
+              // Padding(
+              //   padding: EdgeInsets.symmetric(horizontal: 25),
+              //     child: Container(
+              //       width: double.infinity,
+              //       height: 120,
+              //       decoration: BoxDecoration(
+              //         color: Colors.grey[400],
+              //         borderRadius: BorderRadius.circular(20),
+              //         boxShadow: [
+              //           BoxShadow(
+              //             color: Colors.black26,
+              //             blurRadius: 10,
+              //             offset: Offset(0, 4),
+              //         ),
+              //       ],
+              //     ),
+              //   ),
+              // ),
               //   ],
               // ),
             ],
           ),
         ),
-      )
+      ),
     );
   }
 }
@@ -361,10 +440,7 @@ class _FilterSelectionState extends State<FilterSelection> {
 
   @override
   Widget build(BuildContext context) {
-    final icons = {
-      "Call": Icons.phone,
-      "Link": Icons.link,
-    };
+    final icons = {"Call": Icons.phone, "Link": Icons.link};
 
     return Row(
       children: ["Call", "Link"].map((label) {
@@ -376,7 +452,9 @@ class _FilterSelectionState extends State<FilterSelection> {
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 25, vertical: 8),
               decoration: BoxDecoration(
-                color: isActive ? Color.fromARGB(255, 44, 106, 46) : Colors.white,
+                color: isActive
+                    ? Color.fromARGB(255, 44, 106, 46)
+                    : Colors.white,
                 borderRadius: BorderRadius.circular(30),
               ),
               child: Row(
@@ -385,13 +463,17 @@ class _FilterSelectionState extends State<FilterSelection> {
                   Icon(
                     icons[label],
                     size: 16,
-                    color: isActive ? Colors.white : Color.fromARGB(255, 44, 106, 46),
+                    color: isActive
+                        ? Colors.white
+                        : Color.fromARGB(255, 44, 106, 46),
                   ),
                   SizedBox(width: 6),
                   Text(
                     label,
                     style: TextStyle(
-                      color: isActive ? Colors.white : Color.fromARGB(255, 44, 106, 46),
+                      color: isActive
+                          ? Colors.white
+                          : Color.fromARGB(255, 44, 106, 46),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
