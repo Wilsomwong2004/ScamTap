@@ -1,7 +1,9 @@
+import 'package:ScamTap/pages/monitor_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ScamTap/pages/message_page.dart';
 import '../pages/lookup_page.dart';
+import 'package:ScamTap/pages/home.dart';
 
 class Navibar extends StatefulWidget {
   const Navibar({super.key});
@@ -29,10 +31,10 @@ class _NavibarState extends State<Navibar>
   int selectionIndex = 0;
 
   final List<Widget> _pages = [
-    Center(child: Text('Home')),
+    HomePage(),
     LookupPage(),
     MessagePage(),
-    Center(child: Text('Monitor')),
+    MonitorPage(),
   ];
 
   @override
