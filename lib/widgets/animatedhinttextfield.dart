@@ -4,7 +4,7 @@ import 'package:ScamTap/models/scam_model.dart';
 import 'package:flutter/material.dart';
 
 class AnimatedHintTextField extends StatefulWidget {
-  final Function(bool)? onResultRecieved;
+  final Function(bool, Map<String, dynamic>?)? onResultRecieved;
 
   const AnimatedHintTextField({super.key, this.onResultRecieved});
 
@@ -49,12 +49,18 @@ class _AnimatedHintTextFieldState extends State<AnimatedHintTextField> {
       _result = null;
     });
 
+    widget.onResultRecieved?.call(false, null);
+
     final data = await fetchData(value.trim());
 
     setState(() {
       _isLoading = false;
       _result = data;
     });
+
+    if(data.isNotEmpty) {
+      widget.onResultRecieved?.call(true, data);
+    }
   }
 
   @override

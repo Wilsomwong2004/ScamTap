@@ -4,7 +4,7 @@ import 'package:ScamTap/widgets/scoregauge.dart';
 import 'package:flutter/material.dart';
 
 class ScamDetectedColorContainer extends StatefulWidget {
-  const ScamDetectedColorContainer({super.key});
+  const ScamDetectedColorContainer({super.key, Map<String, dynamic>? result});
 
   @override
   State<ScamDetectedColorContainer> createState() => _ScamDetectedColorContainerState();
@@ -29,7 +29,6 @@ class _ScamDetectedColorContainerState extends State<ScamDetectedColorContainer>
         decoration: BoxDecoration(
           color: IndicatorColor[_currentStatus],
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Color.fromARGB(255, 248, 195, 72), width: 1),
           boxShadow: [
             BoxShadow(
               color: Colors.black26,

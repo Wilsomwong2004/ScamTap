@@ -19,10 +19,10 @@ class LookupPage extends StatefulWidget {
 
 class _LookupPageState extends State<LookupPage> {
   bool _showResult = false;
+  Map<String, dynamic>? _resultData;
 
   @override
   Widget build(BuildContext context) {
-    bool _showResult = false;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -90,11 +90,13 @@ class _LookupPageState extends State<LookupPage> {
                     ),
                     SizedBox(height: 10),
                     AnimatedHintTextField(
-                      onResultRecieved: (bool hasResult) {
+                      onResultRecieved: (bool hasResult, Map<String, dynamic>? data) {
                         setState(() {
                           _showResult = hasResult;
-                        });
-                      },
+                          _resultData = data;
+                        }
+                        );
+                      }
                     ),
                   ],
                 ),
@@ -143,8 +145,7 @@ class _LookupPageState extends State<LookupPage> {
               AnimatedSwitcher(
                 duration: Duration(milliseconds: 400),
                 child: _showResult
-                    ? ScamDetectedColorContainer(key: ValueKey('result'))
-                    : SizedBox.shrink(key: ValueKey('empty')),
+                  ? ScamDetectedColorContainer(key: ValueKey('result'), result: _resultData) : SizedBox.shrink(key: ValueKey('empty')),
               ),
 
               SizedBox(height: 25),
