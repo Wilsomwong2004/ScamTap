@@ -44,11 +44,19 @@ class _AnimatedHintTextFieldState extends State<AnimatedHintTextField> {
   }
 
   Future<void> _onSubmit(String value) async {
-    if (value.trim().isEmpty) return;
+    final input = _controller.text.trim();
+    final isPhone = RegExp(r'^[0-9+\-\s().]+$').hasMatch(input);
+    final isUrl = input.startsWith('http') || input.startsWith('www');
+
+    if (input.isEmpty || (!isPhone && !isUrl)) {
+      setState(() => _hasError = true);
+      return;
+    }
 
     setState(() {
       _isLoading = true;
       _result = null;
+      _hasError = false;
     });
 
     widget.onResultRecieved?.call(false, null);
@@ -57,13 +65,13 @@ class _AnimatedHintTextFieldState extends State<AnimatedHintTextField> {
       context,
       MaterialPageRoute(
         builder: (context) => ScanningPage(
-          inputText: value.trim(),
-          inputType: "Call",
+          inputText: input,
+          inputType: isPhone ? "Call" : "URL",
         ),
       ),
     );
 
-    final data = await fetchData(value.trim());
+    final data = await fetchData(input);
 
     setState(() {
       _isLoading = false;
@@ -124,26 +132,7 @@ class _AnimatedHintTextFieldState extends State<AnimatedHintTextField> {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(30),
                   onTap: () {
-                    final input = _controller.text.trim();
-                    final isPhone = RegExp(r'^[0-9+\-\s()]+$').hasMatch(input);
-                    final isUrl = input.startsWith('http') || input.startsWith('www');
-
-                    if (input.isEmpty || (!isPhone && !isUrl)) {
-                      setState(() => _hasError = true);
-                      return;
-                    }
-
-                    setState(() => _hasError = false);
-
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ScanningPage(
-                          inputText: input,
-                          inputType: isPhone ? "Call" : "URL",
-                        ),
-                      ),
-                    );
+                    _onSubmit(_controller.text);
                   },
                   child: Container(
                     width: 40,

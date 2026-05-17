@@ -1,3 +1,6 @@
 {
-    "cmake.sourceDirectory": "/Users/wilsomwong/Documents/Code/Flutter/ScamTap/linux"
+    "cmake.sourceDirectory": "/Users/wilsomwong/Documents/Code/Flutter/ScamTap/linux",
+    "cSpell.words": [
+        "allprojects"
+    ]
 }
