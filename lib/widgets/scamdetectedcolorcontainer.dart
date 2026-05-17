@@ -17,8 +17,6 @@ class _ScamDetectedColorContainerState extends State<ScamDetectedColorContainer>
     "Safe": Colors.greenAccent,
   };
   
-  String _currentStatus = "Safe";
-  
   @override
   Widget build(BuildContext context) {
     return Padding(
