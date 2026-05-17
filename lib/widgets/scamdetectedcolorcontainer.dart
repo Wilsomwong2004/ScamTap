@@ -139,7 +139,7 @@ class _ScamDetectedColorContainerState extends State<ScamDetectedColorContainer>
             ),
 
             Padding(
-              padding: EdgeInsets.fromLTRB(15, 15, 15, 15),
+              padding: EdgeInsets.fromLTRB(15, 15, 25, 15),
               child: SizedBox(
               width: 120,
               height: 120,

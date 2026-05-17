@@ -80,7 +80,6 @@ class _NavibarState extends State<Navibar>
                               bottom: 3,
                               width: itemWidth,
 
-
                                   child: Container(
                                     decoration: BoxDecoration(
                                       color: Colors.green,
@@ -115,18 +114,48 @@ class _NavibarState extends State<Navibar>
 
   Widget _navItem(IconData icon, String label, int index, double width) {
     final isSelected = selectionIndex == index;
+
     return GestureDetector(
       onTap: () => setState(() => selectionIndex = index),
       child: SizedBox(
         width: width,
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 13),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: isSelected ? Colors.white : const Color.fromARGB(255, 125, 125, 125)),
-              Text(label, style: TextStyle(fontSize: 11, color: isSelected ? Colors.white : const Color.fromARGB(255, 125, 125, 125))),
-            ],
+          padding: const EdgeInsets.symmetric(vertical: 13),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 350),
+            switchInCurve: Curves.easeOut,
+            switchOutCurve: Curves.easeIn,
+            child: Column(
+              key: ValueKey(isSelected),
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 350),
+                  curve: Curves.easeInOut,
+                  child: Icon(
+                    icon,
+                    size: isSelected ? 26 : 22,
+                    color: isSelected
+                        ? Colors.white
+                        : const Color.fromARGB(255, 125, 125, 125),
+                  ),
+                ),
+
+                const SizedBox(height: 4),
+
+                AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 350),
+                  curve: Curves.easeInOut,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isSelected
+                        ? Colors.white
+                        : const Color.fromARGB(255, 125, 125, 125),
+                  ),
+                  child: Text(label),
+                ),
+              ],
+            ),
           ),
         ),
       ),
