@@ -7,6 +7,7 @@ class SearchRecordModel {
   final String riskLevel;
   final DateTime timestamp;
   final Map<String, dynamic> detail;
+  final Map<String, dynamic>? rawData;
 
   SearchRecordModel({
     required this.type,
@@ -15,6 +16,7 @@ class SearchRecordModel {
     required this.riskLevel,
     required this.timestamp,
     required this.detail,
+    this.rawData,
   });
 
   factory SearchRecordModel.fromMap(Map<String, dynamic> map) {

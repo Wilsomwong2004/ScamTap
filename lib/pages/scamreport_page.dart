@@ -4,13 +4,24 @@ import 'package:share_plus/share_plus.dart';
 import 'package:flutter/material.dart';
 
 class ScamreportPage extends StatelessWidget {
-  const ScamreportPage({super.key});
+  const ScamreportPage({super.key, this.result, this.inputText = ''});
 
-  // int phonenumber = ;
-  // String link = ;
+  final Map<String, dynamic>? result;
+  final String inputText;
 
   @override
   Widget build(BuildContext context) {
+      final bool isScam = result?['is_scam'] ?? false;
+      final double riskScore = (result?['risk_score'] as num?)?.toDouble() ?? 0;
+      final String verdict = result?['verdict'] ?? 'UNKNOWN';
+      final String type = result?['type'] ?? 'unknown';
+      final String reason = result?['ai_analysis']?['reason'] ?? 'No reason provided';
+      final String confidence  = result?['ai_analysis']?['confidence'] ?? 'low';
+      final int policeCount = result?['penipumy']?['police_report_count'] ?? 0;
+      final bool isFraud = result?['penipumy']?['fraud'] ?? false;
+      final double spamScore = (result?['huggingface']?['spam_score'] as num?)?.toDouble() ?? 0.0;
+      final int malicious = result?['virustotal']?['malicious']   ?? 0;
+
     return Scaffold(
       appBar: AppBar(
         // backgroundColor: Colors.transparent,
@@ -60,28 +71,28 @@ class ScamreportPage extends StatelessWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
+            
                       Container(
-                        width: 120,
+                        width: 140,
                         height: 120,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Scoregauge(score: 85),
+                        child: Scoregauge(score: riskScore),
                       ),
 
-                      const SizedBox(width: 40),
+                      const SizedBox(width: 25),
 
-                      // Scam info text
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
-                              children: const [
-                                Icon(Icons.warning_amber_rounded,
+                              children: [
+                                Icon(isScam ? Icons.warning_amber_rounded : Icons.check_circle_outline,
                                     color: Colors.black, size: 20),
-                                SizedBox(width: 8),
-                                Text(
+                                const SizedBox(width: 8),
+                                const Text(
                                   "Scam Detected",
                                   style: TextStyle(
                                     fontSize: 16,
@@ -91,15 +102,15 @@ class ScamreportPage extends StatelessWidget {
                               ],
                             ),
                             const SizedBox(height: 10),
-                            const Text(
-                              "High risk ! No interact !",
-                              style: TextStyle(
+                            Text(
+                              isScam ? "Scam Detected" : "Looks Safe",
+                              style: const TextStyle(
                                   fontSize: 13, fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 6),
-                            const Text(
-                              "Beware using the link,\nDon't share to anyone",
-                              style: TextStyle(fontSize: 13),
+                            Text(
+                              isScam ? "High risk! Do not interact!" : "No threats detected",
+                              style: const TextStyle(fontSize: 13),
                             ),
                           ],
                         ),
@@ -111,38 +122,95 @@ class ScamreportPage extends StatelessWidget {
 
                   Container(
                     width: double.infinity,
-                    height: 170,
+                    height: 140,
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color.fromARGB(255, 249, 202, 246),
+                        Color.fromARGB(255, 208, 199, 247),
+                        Color.fromRGBO(227, 222, 251, 1),
+                      ],
+                    ),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     alignment: Alignment.center,
-                    child: Text(
-                      "Message Highlight (For message)",
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.auto_awesome_rounded, size: 16, color: Colors.grey[800], fontWeight: FontWeight.bold,),
+                              const SizedBox(width: 8),
+                              Text(
+                                "AI analysis:",
+                                style: TextStyle(fontSize: 12, color: Colors.grey[800], fontWeight: FontWeight.w500),
+                              ),
+
+                              const SizedBox(height: 10),
+                            ],
+                          ),
+
+                          const SizedBox(height: 10),
+
+                          Text(
+                            reason,
+                            style: TextStyle(fontSize: 12, color: Colors.grey[800]),
+                          ),
+                        ],
                       ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: confidence == 'high' ? Colors.red[100] : Colors.orange[100],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      "Confidence: $confidence",
+                      style: TextStyle(fontSize: 11, color: Colors.black87),
                     ),
                   ),
 
                   const SizedBox(height: 24),
 
+                  if (type == 'phone') ...[
                   _EvidenceItem(
-                    label: "Fake domain",
-                    subtitle: "3 days ago",
-                    count: 10,
+                    icon: Icons.phone_disabled_rounded,
+                    label: "Fraud Reported",
+                    subtitle: isFraud ? "Confirmed" : "Not reported",
+                    count: policeCount,
                   ),
                   const SizedBox(height: 16),
                   _EvidenceItem(
-                    label: "Sender proof message",
-                    count: 20,
+                    icon: Icons.gavel_rounded,
+                    label: "Police Reports",
+                    count: policeCount,
+                  ),
+                ] else if (type == 'link') ...[
+                  _EvidenceItem(
+                    icon: Icons.dangerous_rounded,
+                    label: "Malicious Engines",
+                    count: malicious,
                   ),
                   const SizedBox(height: 16),
                   _EvidenceItem(
-                    label: "Community Report",
-                    count: 200,
+                    icon: Icons.warning_amber_rounded,
+                    label: "Suspicious Engines",
+                    count: result?['virustotal']?['suspicious'] ?? 0,
                   ),
+                ] else if (type == 'message') ...[
+                  _EvidenceItem(
+                    icon: Icons.security,
+                    label: "Spam Score",
+                    subtitle: "${(spamScore * 100).toStringAsFixed(0)}%",
+                    count: (spamScore * 100).toInt(),
+                  ),
+                ],
 
                   const SizedBox(height: 32),
                 ],
@@ -179,7 +247,7 @@ class ScamreportPage extends StatelessWidget {
                       child: OutlinedButton.icon(
                         onPressed: () {
                           SharePlus.instance.share(
-                            ShareParams(text: 'testing')
+                            ShareParams(text: 'Risk Score: $riskScore/100\nVerdict: $verdict\nReason: $reason')
                           );
                         },
                         icon: const Icon(Icons.share_outlined, size: 18),
@@ -235,11 +303,13 @@ class _EvidenceItem extends StatelessWidget {
   final String label;
   final String? subtitle;
   final int count;
+  final IconData icon;
 
   const _EvidenceItem({
     required this.label,
     this.subtitle,
     required this.count,
+    required this.icon,
   });
 
   @override
@@ -249,6 +319,11 @@ class _EvidenceItem extends StatelessWidget {
         CircleAvatar(
           radius: 22,
           backgroundColor: Colors.grey[300],
+          child: Icon(
+            icon,
+            size: 20,
+            color: Colors.black87,
+          ),
         ),
         const SizedBox(width: 16),
         Expanded(
@@ -262,12 +337,15 @@ class _EvidenceItem extends StatelessWidget {
             ],
           ),
         ),
-        Text(
-          "$count",
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-            color: Colors.black87,
+        Padding(
+          padding: const EdgeInsets.fromLTRB(0, 0, 15, 0),
+          child: Text(
+            "$count",
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              color: Colors.black87,
+            ),
           ),
         ),
       ],

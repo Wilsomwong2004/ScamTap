@@ -46,7 +46,7 @@ class _AnimatedHintTextFieldState extends State<AnimatedHintTextField> {
   Future<void> _onSubmit(String value) async {
     final input = _controller.text.trim();
     final isPhone = RegExp(r'^[0-9+\-\s().]+$').hasMatch(input);
-    final isUrl = input.startsWith('http') || input.startsWith('www');
+    final isUrl   = input.startsWith('http') || input.startsWith('www') || input.contains('.');
 
     if (input.isEmpty || (!isPhone && !isUrl)) {
       setState(() => _hasError = true);
@@ -54,9 +54,9 @@ class _AnimatedHintTextFieldState extends State<AnimatedHintTextField> {
     }
 
     setState(() {
-      _isLoading = true;
-      _result = null;
-      _hasError = false;
+      _hasError   = false;
+      _isLoading  = true;
+      _result     = null;
     });
 
     widget.onResultRecieved?.call(false, null);
@@ -65,22 +65,22 @@ class _AnimatedHintTextFieldState extends State<AnimatedHintTextField> {
       context,
       MaterialPageRoute(
         builder: (context) => ScanningPage(
-          inputText: input,
-          inputType: isPhone ? "Call" : "URL",
+          inputText : input,
+          inputType : isPhone ? "Call" : "URL",
+          onResult  : (data) {
+            setState(() {
+              _isLoading = false;
+              _result    = data;
+            });
+            if (data!.isNotEmpty) {
+              widget.onResultRecieved?.call(true, data);
+            }
+          },
         ),
       ),
     );
 
-    final data = await fetchData(input);
-
-    setState(() {
-      _isLoading = false;
-      _result = data;
-    });
-
-    if(data.isNotEmpty) {
-      widget.onResultRecieved?.call(true, data);
-    }
+    setState(() => _isLoading = false);
   }
 
   @override

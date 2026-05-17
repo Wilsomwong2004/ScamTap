@@ -4,7 +4,8 @@ import 'package:ScamTap/widgets/scoregauge.dart';
 import 'package:flutter/material.dart';
 
 class ScamDetectedColorContainer extends StatefulWidget {
-  const ScamDetectedColorContainer({super.key, Map<String, dynamic>? result});
+  final Map<String, dynamic>? result;
+  const ScamDetectedColorContainer({super.key, this.result});
 
   @override
   State<ScamDetectedColorContainer> createState() => _ScamDetectedColorContainerState();
@@ -12,20 +13,27 @@ class ScamDetectedColorContainer extends StatefulWidget {
 
 class _ScamDetectedColorContainerState extends State<ScamDetectedColorContainer> {
   final IndicatorColor = {
-    "Dangerous": Colors.redAccent,
+    "Dangerous": const Color.fromARGB(255, 197, 63, 63),
     "Warning": Color.fromRGBO(252, 220, 114, 1),
-    "Safe": Colors.greenAccent,
+    "Safe": const Color.fromARGB(255, 96, 224, 107),
   };
   
   @override
   Widget build(BuildContext context) {
+    final bool isScam = widget.result?['is_scam'] ?? false;
+    final double riskScore = (widget.result?['risk_score'] as num?)?.toDouble() ?? 0;
+    final String verdict = widget.result?['verdict'] ?? 'UNKNOWN';
+    final String reason = widget.result?['ai_analysis']?['reason'] ?? '';
+    
+    String currentStatus = riskScore >= 60 ? "Dangerous" : riskScore >= 30 ? "Warning": "Safe";
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 20),
       child: Container(
         width: double.infinity,
         height: 170,
         decoration: BoxDecoration(
-          color: IndicatorColor[_currentStatus],
+          color: IndicatorColor[currentStatus],
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -49,7 +57,7 @@ class _ScamDetectedColorContainerState extends State<ScamDetectedColorContainer>
                     children: [
 
                       Icon(
-                        Icons.warning,
+                        isScam ? Icons.warning : Icons.check_circle,
                         color: const Color.fromARGB(255, 0, 0, 0),
                         size: 20.0,
                         semanticLabel: 'Text to announce in acce',
@@ -58,7 +66,7 @@ class _ScamDetectedColorContainerState extends State<ScamDetectedColorContainer>
                       SizedBox(width: 10),
 
                       Text(
-                        "Scam Detected",
+                        isScam ? "Scam Detected" : "Looks Safe",
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -70,7 +78,7 @@ class _ScamDetectedColorContainerState extends State<ScamDetectedColorContainer>
                   SizedBox(height: 10),
 
                   Text(
-                    "Avoid interaction immediately",
+                    isScam ? "Avoid interaction immediately" : "No threats detected",
                     style: TextStyle(fontSize: 13),
                   ),
 
@@ -90,7 +98,10 @@ class _ScamDetectedColorContainerState extends State<ScamDetectedColorContainer>
                             onPressed: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => const ScamreportPage()),
+                                MaterialPageRoute(builder: (context) => ScamreportPage(
+                                  result    : widget.result,
+                                  inputText : widget.result?['value'] ?? '',
+                                )),
                               );
                             },
                             child: Text(
@@ -132,7 +143,7 @@ class _ScamDetectedColorContainerState extends State<ScamDetectedColorContainer>
               child: SizedBox(
               width: 120,
               height: 120,
-              child: Scoregauge(score: 85),
+              child: Scoregauge(score: riskScore),
             ),
             ),
           ],

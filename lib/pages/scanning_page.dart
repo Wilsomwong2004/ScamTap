@@ -1,14 +1,17 @@
+import 'package:ScamTap/models/scam_model.dart';
 import 'package:flutter/material.dart';
 import 'package:ScamTap/pages/scamreport_page.dart';
 
 class ScanningPage extends StatefulWidget {
-  final String inputText; // The number or link being scanned
-  final String inputType; // "Call" or "Link"
+  final String inputText;
+  final String inputType;
+  final Function(Map<String, dynamic>?)? onResult;
 
   const ScanningPage({
     super.key,
     required this.inputText,
     required this.inputType,
+    this.onResult,
   });
 
   @override
@@ -34,7 +37,8 @@ class _ScanningPageState extends State<ScanningPage> {
   }
 
   void _startScanning() async {
-    // Simulate scanning process with delays
+    final fetchFuture = fetchData(widget.inputText);
+
     for (int i = 0; i < scanSteps.length; i++) {
       await Future.delayed(const Duration(milliseconds: 800));
       if (mounted) {
@@ -45,20 +49,22 @@ class _ScanningPageState extends State<ScanningPage> {
       }
     }
 
-    // Wait a moment before navigating
     await Future.delayed(const Duration(milliseconds: 500));
     if (mounted) {
-      setState(() {
-        isComplete = true;
-      });
-      
-      // Navigate to results page
+      setState(() => isComplete = true);
+
+      final result = await fetchFuture;
+      widget.onResult?.call(result);
+
       await Future.delayed(const Duration(milliseconds: 300));
       if (mounted) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => const ScamreportPage(),
+            builder: (context) => ScamreportPage(
+              result    : result,
+              inputText : widget.inputText,
+            ),
           ),
         );
       }

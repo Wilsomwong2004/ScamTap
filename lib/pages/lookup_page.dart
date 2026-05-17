@@ -1,4 +1,5 @@
-import 'dart:ffi';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ScamTap/models/search_record_model.dart';
 import 'package:ScamTap/pages/scamreport_page.dart';
 import 'package:ScamTap/services/firestore_service.dart';
@@ -20,6 +21,28 @@ class LookupPage extends StatefulWidget {
 class _LookupPageState extends State<LookupPage> {
   bool _showResult = false;
   Map<String, dynamic>? _resultData;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLastResult();
+  }
+
+  Future<void> _loadLastResult() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? saved = prefs.getString('last_result');
+    if (saved != null) {
+      setState(() {
+        _resultData = jsonDecode(saved);
+        _showResult = true;
+      });
+    }
+  }
+
+  Future<void> _saveResult(Map<String, dynamic> data) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('last_result', jsonEncode(data));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +113,10 @@ class _LookupPageState extends State<LookupPage> {
                     SizedBox(height: 10),
                     AnimatedHintTextField(
                       onResultRecieved:
-                          (bool hasResult, Map<String, dynamic>? data) {
+                          (bool hasResult, Map<String, dynamic>? data) async {
+                            if (hasResult && data != null) {
+                              await _saveResult(data);
+                            }
                             setState(() {
                               _showResult = hasResult;
                               _resultData = data;
@@ -222,7 +248,10 @@ class _LookupPageState extends State<LookupPage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const ScamreportPage(),
+                                  builder: (context) => ScamreportPage(
+                                    result    : record.rawData ?? {},
+                                    inputText : record.value,
+                                  ),
                                 ),
                               );
                             },

@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_ai/firebase_ai.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
@@ -148,7 +147,7 @@ Future<Map<String, dynamic>> fetchData(String value) async {
     
     try {
       final hfResponse = await http.post(
-        Uri.parse("https://api-inference.huggingface.co/models/mshenoda/roberta-spam"),
+        Uri.parse("https://router.huggingface.co/hf-inference/models/mshenoda/roberta-spam/pipeline/text-classification"),
         headers: {
           "Authorization" : "Bearer $huggingfaceAPI",
           "Content-Type"  : "application/json",
@@ -158,6 +157,7 @@ Future<Map<String, dynamic>> fetchData(String value) async {
 
       print("HuggingFace Status: ${hfResponse.statusCode}");
       print("HuggingFace Body: ${hfResponse.body}");
+      print("HuggingFace API: '$huggingfaceAPI'");
 
       if (hfResponse.statusCode == 200) {
         final hfData = jsonDecode(hfResponse.body);
@@ -249,7 +249,7 @@ Future<void> _scamAnalysis(String value, Map<String, dynamic> result) async {
     final aiJson = jsonDecode(cleanJson);
     result['ai_analysis'] = aiJson;
 
-    final int aiRiskScore = (aiJson['risk_score'] as num?)?.toInt() ?? 50;
+    final double aiRiskScore = (aiJson['risk_score'] as num?)?.toDouble() ?? 50;
     result['risk_score']  = aiRiskScore;
 
     log("AI Risk Score : $aiRiskScore / 100");
@@ -268,7 +268,7 @@ Future<void> _scamAnalysis(String value, Map<String, dynamic> result) async {
   }
 
   bool aiSaysScam = result['ai_analysis']?['is_scam'] ?? false;
-  int  riskScore = (result['risk_score'] as num?)?.toInt() ?? 50;
+  double riskScore = (result['risk_score'] as num?)?.toDouble() ?? 50;
   bool finalIsScam = isFraud || isSpam || hfIsSpam || policeReports > 0 || aiSaysScam || riskScore >= 60;
 
   result['is_scam'] = finalIsScam;
