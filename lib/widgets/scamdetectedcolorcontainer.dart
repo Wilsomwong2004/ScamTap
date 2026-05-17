@@ -13,7 +13,7 @@ class ScamDetectedColorContainer extends StatefulWidget {
 
 class _ScamDetectedColorContainerState extends State<ScamDetectedColorContainer> {
   final IndicatorColor = {
-    "Dangerous": const Color.fromARGB(255, 197, 63, 63),
+    "Dangerous": const Color.fromARGB(255, 247, 116, 116),
     "Warning": Color.fromRGBO(252, 220, 114, 1),
     "Safe": const Color.fromARGB(255, 96, 224, 107),
   };

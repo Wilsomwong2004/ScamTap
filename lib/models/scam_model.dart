@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'package:ScamTap/services/firestore_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_ai/firebase_ai.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -280,43 +281,40 @@ Future<void> _scamAnalysis(String value, Map<String, dynamic> result) async {
 
 Future<void> _saveToFirebase(String value, Map<String, dynamic> result) async {
   try {
-    final db = FirebaseFirestore.instance;
+    final firestoreService = FirestoreService();
+    final int riskScore = (result['risk_score'] as num?)?.toInt() ?? 0;
 
+    Map<String, dynamic> detail = {};
     if (_isPhoneNumber(value)) {
-      await db.collection('scam_checks').add({
-        'value'      : value,
-        'type'       : result['type'],
-        'numverify'  : result['numverify']  ?? null,
-        'penipumy'   : result['penipumy']   ?? null,
-        'is_scam'    : result['is_scam']    ?? false,
-        'risk_score' : result['risk_score'] ?? 0,
-        'verdict'    : result['verdict']    ?? 'UNKNOWN',
-        'ai_analysis': result['ai_analysis'] ?? null,
-        'checked_at' : FieldValue.serverTimestamp(),
-      });
-    } else if (_isLink(value)) {
-      await db.collection('scam_checks').add({
-        'value'      : value,
-        'type'       : result['type'],
-        'virustotal' : result['virustotal'] ?? null,
-        'is_scam'    : result['is_scam']    ?? false,
-        'risk_score' : result['risk_score'] ?? 0,
-        'verdict'    : result['verdict']    ?? 'UNKNOWN',
-        'ai_analysis': result['ai_analysis'] ?? null,
-        'checked_at' : FieldValue.serverTimestamp(),
-      });
-    } else {
-      await db.collection('scam_checks').add({
-        'value'       : value,
-        'type'        : result['type'],
-        'huggingface' : result['huggingface'] ?? null,
-        'is_scam'     : result['is_scam']     ?? false,
-        'risk_score'  : result['risk_score']  ?? 0,
+      detail = {
+        'numverify'   : result['numverify']   ?? {},
+        'penipumy'    : result['penipumy']    ?? {},
+        'ai_analysis' : result['ai_analysis'] ?? {},
         'verdict'     : result['verdict']     ?? 'UNKNOWN',
-        'ai_analysis' : result['ai_analysis'] ?? null,
-        'checked_at'  : FieldValue.serverTimestamp(),
-      });
+        'is_scam'     : result['is_scam']     ?? false,
+      };
+    } else if (_isLink(value)) {
+      detail = {
+        'virustotal'  : result['virustotal']  ?? {},
+        'ai_analysis' : result['ai_analysis'] ?? {},
+        'verdict'     : result['verdict']     ?? 'UNKNOWN',
+        'is_scam'     : result['is_scam']     ?? false,
+      };
+    } else {
+      detail = {
+        'huggingface' : result['huggingface'] ?? {},
+        'ai_analysis' : result['ai_analysis'] ?? {},
+        'verdict'     : result['verdict']     ?? 'UNKNOWN',
+        'is_scam'     : result['is_scam']     ?? false,
+      };
     }
+
+    await firestoreService.saveSearchRecord(
+      type      : result['type'] ?? 'unknown',
+      value     : value,
+      riskScore : riskScore,
+      detail    : detail,
+    );
 
   } catch(e) {
     log("Database save error: $e");

@@ -1,12 +1,53 @@
+import 'dart:convert';
 import 'package:ScamTap/widgets/scamdetectedcolorcontainer.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ScamTap/models/search_record_model.dart';
+import 'package:ScamTap/pages/scamreport_page.dart';
+import 'package:ScamTap/services/firestore_service.dart';
 import 'package:flutter/material.dart';
+import 'package:ScamTap/widgets/animatedhinttextfield.dart';
 import 'package:ScamTap/widgets/miniprofile.dart';
+import 'package:ScamTap/widgets/scoregauge.dart';
+import 'package:ScamTap/pages/scanning_page.dart';
 
-class MessagePage extends StatelessWidget {
+class MessagePage extends StatefulWidget {
   const MessagePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  State<MessagePage> createState() => _MessagePageState();
+}
+
+class _MessagePageState extends State<MessagePage> {
+  bool _showResult = false;
+  Map<String, dynamic>? _resultData;
+  bool _isInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLastResult();
+  }
+
+  Future<void> _loadLastResult() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? saved = prefs.getString('last_result_message');
+    if (saved != null) {
+      setState(() {
+        _resultData = jsonDecode(saved);
+        _showResult = true;
+      });
+
+      _isInitialized = true;
+    }
+  }
+
+  Future<void> _saveResult(Map<String, dynamic> data) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('last_result_message', jsonEncode(data));
+  }
+
+  @override
+Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -43,8 +84,7 @@ class MessagePage extends StatelessWidget {
         ],
       ),
 
-      body:
-      Container(
+      body: Container(
         width: double.infinity,
         height: double.infinity,
         decoration: BoxDecoration(
@@ -56,260 +96,330 @@ class MessagePage extends StatelessWidget {
           ),
         ),
         child: SingleChildScrollView(
-        padding: EdgeInsets.only(
-          top: kToolbarHeight + 55,
-          bottom: 100,
-        ),
-        child: Column(
-          children: [
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Verify Message", style: TextStyle(fontSize: 15,fontWeight: FontWeight.w500, color: const Color.fromARGB(255, 255, 255, 255))),
-                  SizedBox(height: 10),
-                  TextField(
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: const Color.fromARGB(255, 233, 247, 235),
-                      hintStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: const Color.fromARGB(255, 109, 109, 109)),
-                      hintText: "Enter text to verify",
-                      prefixIcon: Padding(
-                        padding: EdgeInsets.fromLTRB(15, 0, 0, 0),
-                        child: Icon(Icons.search),
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30),
-                        borderSide: const BorderSide(width: 1, color: Color.fromARGB(255, 76, 87, 175)),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30),
-                        borderSide: const BorderSide(width: 1, color: Color.fromARGB(255, 76, 87, 175)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30),
-                        borderSide: const BorderSide(width: 2, color: Color.fromARGB(255, 76, 87, 175)),
+          padding: EdgeInsets.only(top: kToolbarHeight + 55, bottom: 100),
+          child: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Verify Message",
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                  ),
-                ],
+                    SizedBox(height: 10),
+                    AnimatedHintTextField(
+                      isMessage: true,
+                      onResultRecieved:
+                          (bool hasResult, Map<String, dynamic>? data) async {
+                            if (hasResult && data != null) {
+                              await _saveResult(data);
+                            }
+                            setState(() {
+                              _showResult = hasResult;
+                              _resultData = data;
+                            });
+                          },
+                    ),
+                  ],
+                ),
               ),
-            ),
 
-            SizedBox(height: 15),
 
-            ScamDetectedColorContainer(),
-            
-            // Padding(
-            //   padding: EdgeInsets.symmetric(horizontal: 25),
-            //   child: Container(
-            //     width: double.infinity,
-            //     height: 170,
-            //     decoration: BoxDecoration(
-            //       color: Colors.grey[400],
-            //       borderRadius: BorderRadius.circular(20),
-            //       boxShadow: [
-            //         BoxShadow(
-            //           color: Colors.black26,
-            //           blurRadius: 10,
-            //           offset: Offset(0, 4),
-            //         ),
-            //       ],
-            //     ),
-            //     child: Row(
-            //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            //       crossAxisAlignment: CrossAxisAlignment.center,
-            //       children: [
-            //         Padding(
-            //           padding: EdgeInsets.fromLTRB(20, 20, 5, 20),
-            //           child: Column(
-            //             crossAxisAlignment: CrossAxisAlignment.start,
-            //             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            //             children: [
-            //               Row(
-            //                 children: [
+              SizedBox(height: 15),
 
-            //                   Icon(
-            //                     Icons.warning,
-            //                     color: Colors.yellow.shade400,
-            //                     size: 20.0,
-            //                     semanticLabel: 'Text to announce in acce',
-            //                     ),
-                              
-            //                   SizedBox(width: 10),
+              AnimatedSwitcher(
+                duration: Duration(milliseconds: 400),
+                child: !_isInitialized
+                    ? SizedBox.shrink(key: ValueKey('loading'))
+                    : _showResult
+                        ? ScamDetectedColorContainer(
+                            key: ValueKey('result'),
+                            result: _resultData,
+                          )
+                        : SizedBox.shrink(key: ValueKey('empty')),
+              ),
 
-            //                   Text(
-            //                     "Scam Detected",
-            //                     style: TextStyle(
-            //                       fontSize: 16,
-            //                       fontWeight: FontWeight.bold,
-            //                     ),
-            //                   ),
-            //                 ],
-            //               ),
+              SizedBox( height: _showResult ? 25 : 10,),
 
-            //               SizedBox(height: 10),
-
-            //               Text("High risk! No interact!"),
-
-            //               SizedBox(height: 5),
-
-            //               Row(
-            //                 children: [
-            //                   Padding(
-            //                     padding: EdgeInsets.symmetric(
-            //                       horizontal: 0,
-            //                       vertical: 10,
-            //                     ),
-            //                     child: SizedBox(
-            //                       width: 130,
-            //                       height: 35,
-            //                       child: ElevatedButton(
-            //                         onPressed: () {
-            //                           print("clicked!");
-            //                         },
-            //                         child: Text(
-            //                           "Check Report",
-            //                           style: TextStyle(fontSize: 12),
-            //                         ),
-            //                       ),
-            //                     ),
-                                
-            //                   ),
-
-            //                   SizedBox(width: 8),
-                              
-            //                   SizedBox(
-            //                     width: 35,
-            //                     height: 35,
-            //                     child: ElevatedButton(
-            //                       onPressed: () {
-            //                         print("clicked!");
-            //                       },
-            //                       style: ElevatedButton.styleFrom(
-            //                         padding: EdgeInsets.zero,
-            //                         shape: RoundedRectangleBorder(
-            //                           borderRadius: BorderRadius.circular(30),
-            //                         ),
-            //                       ),
-            //                       child: Icon(Icons.report, size: 18),
-            //                     ),
-            //                   ),
-            //                 ],
-            //               ),
-
-            //               // SizedBox(width: 10),
-            //             ],
-            //           ),
-            //         ),
-
-            //         Padding(
-            //           padding: EdgeInsets.fromLTRB(15, 15, 15, 15),
-            //           child: Container(
-            //             width: 120,
-            //             height: 120,
-            //             decoration: BoxDecoration(
-            //               color: const Color.fromARGB(255, 255, 255, 255),
-            //               borderRadius: BorderRadius.circular(20),
-            //               boxShadow: [
-            //                 BoxShadow(
-            //                   color: Colors.black26,
-            //                   blurRadius: 10,
-            //                   offset: Offset(0, 2),
-            //                 ),
-            //               ],
-            //             ),
-            //           ),
-            //         ),
-            //       ],
-            //     ),
-            //   ),
-            // ),
-
-            SizedBox(height: 25),
-
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: SizedBox(
-                width: double.infinity,
-                child: Text(
-                  "Recent Message",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: const Color.fromARGB(255, 255, 255, 255),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: Text(
+                    "Recent Message",
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: const Color.fromARGB(255, 255, 255, 255),
+                    ),
                   ),
                 ),
               ),
-            ),
 
-            SizedBox(height: 5),
+              // Row(
+              //   children: [
+              //     Padding(
+              //       padding: EdgeInsets.fromLTRB(20, 5, 15, 5),
+              //       child: SizedBox(
+              //         width: 110,
+              //         height: 40,
+              //         child: ElevatedButton.icon(
+              //           onPressed: () {
+              //             print("clicked!");
+              //           },
+              //           style: ElevatedButton.styleFrom(
+              //             backgroundColor: Colors.white
+              //           ),
+              //           icon: Icon(Icons.call_sharp),
+              //           label: Text("Call"),
+              //         ),
+              //       ),
+              //     ),
 
-        
-            Column(
-              children: [
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                    child: Container(
-                      width: double.infinity,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[400],
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black26,
-                            blurRadius: 10,
-                            offset: Offset(0, 4),
+              //     // SizedBox(width: 15),
+
+              //     Padding(
+              //       padding: EdgeInsets.fromLTRB(0, 5, 5, 5),
+              //       child: SizedBox(
+              //         width: 110,
+              //         height: 40,
+              //         child: ElevatedButton.icon(
+              //           onPressed: () {
+              //             print("clicked!");
+              //           },
+              //           style: ElevatedButton.styleFrom(
+              //             backgroundColor: Colors.white
+              //           ),
+              //           icon: Icon(Icons.link),
+              //           label: Text("Link"),
+              //         ),
+              //       ),
+              //     ),
+              //   ],
+              // ),
+              SizedBox(height: 10),
+
+              StreamBuilder<List<SearchRecordModel>>(
+                stream: FirestoreService().getSearchHistory(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return CircularProgressIndicator();
+                  }
+
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 28,
+                        vertical: _showResult ? 100 : 160,
+                      ),
+                      child: Column (
+                        children: [
+                          Icon(Icons.warning_rounded, color: Colors.red, size: 30,),
+                          SizedBox(height: 5),
+                          Text(
+                            "No record found!",
+                            style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
+                          )
+                        ],
+                      ),
+                    );
+                  }
+
+                  final records = snapshot.data!;
+
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
+                    itemCount: records.length,
+                    itemBuilder: (context, index) {
+                      final record = records[index];
+                      return Padding(
+                        padding: EdgeInsets.fromLTRB(20, 5, 20, 5),
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 90,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ScamreportPage(
+                                    result    : record.rawData ?? {},
+                                    inputText : record.value,
+                                  ),
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color.fromARGB(
+                                255,
+                                233,
+                                247,
+                                235,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(25),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    CircleAvatar(
+                                      backgroundColor: const Color.fromARGB(
+                                        255,
+                                        44,
+                                        106,
+                                        46,
+                                      ),
+                                      child: Icon(
+                                        Icons.person,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+
+                                    SizedBox(width: 12),
+
+                                    Text(
+                                      record.value,
+                                      style: TextStyle(fontSize: 14),
+                                    ),
+                                  ],
+                                ),
+
+                                Container(
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 80,
+                                        height: 30,
+                                        alignment: Alignment.center,
+                                        decoration: BoxDecoration(
+                                          color: const Color.fromARGB(
+                                            255,
+                                            78,
+                                            114,
+                                            84,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            30,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: const Color.fromARGB(
+                                                255,
+                                                41,
+                                                92,
+                                                42,
+                                              ),
+                                              blurRadius: 2,
+                                            ),
+                                          ],
+                                        ),
+
+                                        child: Text(
+                                          record.riskLevel,
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+
+                                      SizedBox(width: 10),
+
+                                      Container(
+                                        child: Icon(
+                                          Icons.arrow_forward_ios_rounded,
+                                          weight: 800,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-              
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
-                    child: Container(
-                      width: double.infinity,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[400],
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black26,
-                            blurRadius: 10,
-                            offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                      );
+                    },
+                  );
+                },
+              ),
 
-                // Padding(
-                //   padding: EdgeInsets.symmetric(horizontal: 25),
-                //     child: Container(
-                //       width: double.infinity,
-                //       height: 120,
-                //       decoration: BoxDecoration(
-                //         color: Colors.grey[400],
-                //         borderRadius: BorderRadius.circular(20),
-                //         boxShadow: [
-                //           BoxShadow(
-                //             color: Colors.black26,
-                //             blurRadius: 10,
-                //             offset: Offset(0, 4),
-                //         ),
-                //       ],
-                //     ),
-                //   ),
-                // ),
-              ],
-            ),
-          ],
+              // Column(
+              //   children: [
+
+              // Padding(
+              //   padding: EdgeInsets.symmetric(horizontal: 25, vertical: 15),
+              //     child: Container(
+              //       width: double.infinity,
+              //       height: 100,
+              //       decoration: BoxDecoration(
+              //         color: const Color.fromARGB(255, 233, 247, 235),
+              //         borderRadius: BorderRadius.circular(20),
+              //         boxShadow: [
+              //           BoxShadow(
+              //             color: Colors.black26,
+              //             blurRadius: 10,
+              //             offset: Offset(0, 4),
+              //         ),
+              //       ],
+              //     ),
+              //   ),
+              // ),
+
+              // Padding(
+              //   padding: EdgeInsets.symmetric(horizontal: 25),
+              //     child: Container(
+              //       width: double.infinity,
+              //       height: 120,
+              //       decoration: BoxDecoration(
+              //         color: Colors.grey[400],
+              //         borderRadius: BorderRadius.circular(20),
+              //         boxShadow: [
+              //           BoxShadow(
+              //             color: Colors.black26,
+              //             blurRadius: 10,
+              //             offset: Offset(0, 4),
+              //         ),
+              //       ],
+              //     ),
+              //   ),
+              // ),
+
+              // Padding(
+              //   padding: EdgeInsets.symmetric(horizontal: 25),
+              //     child: Container(
+              //       width: double.infinity,
+              //       height: 120,
+              //       decoration: BoxDecoration(
+              //         color: Colors.grey[400],
+              //         borderRadius: BorderRadius.circular(20),
+              //         boxShadow: [
+              //           BoxShadow(
+              //             color: Colors.black26,
+              //             blurRadius: 10,
+              //             offset: Offset(0, 4),
+              //         ),
+              //       ],
+              //     ),
+              //   ),
+              // ),
+              //   ],
+              // ),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }

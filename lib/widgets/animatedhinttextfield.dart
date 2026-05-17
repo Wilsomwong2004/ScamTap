@@ -6,8 +6,9 @@ import 'package:flutter/material.dart';
 
 class AnimatedHintTextField extends StatefulWidget {
   final Function(bool, Map<String, dynamic>?)? onResultRecieved;
+  final bool isMessage;
 
-  const AnimatedHintTextField({super.key, this.onResultRecieved});
+  const AnimatedHintTextField({super.key, this.onResultRecieved, this.isMessage = false,});
 
   @override
   State<AnimatedHintTextField> createState() => _AnimatedHintTextFieldState();
@@ -48,15 +49,22 @@ class _AnimatedHintTextFieldState extends State<AnimatedHintTextField> {
     final isPhone = RegExp(r'^[0-9+\-\s().]+$').hasMatch(input);
     final isUrl   = input.startsWith('http') || input.startsWith('www') || input.contains('.');
 
-    if (input.isEmpty || (!isPhone && !isUrl)) {
-      setState(() => _hasError = true);
-      return;
+    if (widget.isMessage) {
+      if (input.isEmpty || isPhone || isUrl) {
+        setState(() => _hasError = true);
+        return;
+      }
+    } else {
+      if (input.isEmpty || (!isPhone && !isUrl)) {
+        setState(() => _hasError = true);
+        return;
+      }
     }
 
     setState(() {
-      _hasError   = false;
-      _isLoading  = true;
-      _result     = null;
+      _hasError  = false;
+      _isLoading = true;
+      _result    = null;
     });
 
     widget.onResultRecieved?.call(false, null);
@@ -66,13 +74,13 @@ class _AnimatedHintTextFieldState extends State<AnimatedHintTextField> {
       MaterialPageRoute(
         builder: (context) => ScanningPage(
           inputText : input,
-          inputType : isPhone ? "Call" : "URL",
+          inputType : widget.isMessage ? "Message" : (isPhone ? "Call" : "URL"),
           onResult  : (data) {
             setState(() {
               _isLoading = false;
               _result    = data;
             });
-            if (data!.isNotEmpty) {
+            if (data != null && data.isNotEmpty) {
               widget.onResultRecieved?.call(true, data);
             }
           },
@@ -109,8 +117,14 @@ class _AnimatedHintTextFieldState extends State<AnimatedHintTextField> {
             child: child,
           ),
           child: Text(
-            _hints[_currentIndex],
-            key: ValueKey<String>(_hints[_currentIndex]),
+          widget.isMessage
+                ? "Enter message here..."
+                : _hints[_currentIndex],
+            key: ValueKey<String>(
+              widget.isMessage
+                  ? "message_hint"
+                  : _hints[_currentIndex],
+            ),
             style: const TextStyle(
               color: Color.fromARGB(255, 108, 107, 107),
               fontWeight: FontWeight.w500,
@@ -137,8 +151,8 @@ class _AnimatedHintTextFieldState extends State<AnimatedHintTextField> {
                   child: Container(
                     width: 40,
                     height: 40,
-                    decoration: const BoxDecoration(
-                      color: Colors.green,
+                    decoration: BoxDecoration(
+                      color: widget.isMessage ? const Color.fromARGB(255, 76, 87, 175): Colors.green,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -152,7 +166,7 @@ class _AnimatedHintTextFieldState extends State<AnimatedHintTextField> {
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
           borderSide: BorderSide(
-            width: 1,
+            width: 3,
             color: _hasError ? Colors.red : Colors.transparent,
           ),
         ),
@@ -160,14 +174,14 @@ class _AnimatedHintTextFieldState extends State<AnimatedHintTextField> {
           borderRadius: BorderRadius.circular(30),
           borderSide: BorderSide(
             width: 1,
-            color: _hasError ? Colors.red : Colors.green,
+            color: _hasError ? Colors.red : widget.isMessage ? const Color.fromARGB(255, 76, 87, 175) : Colors.green,
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
           borderSide: BorderSide(
             width: 2,
-            color: _hasError ? Colors.red : Colors.green,
+            color: _hasError ? Colors.red : widget.isMessage ? const Color.fromARGB(255, 76, 87, 175) : Colors.green,
           ),
         ),
       ),

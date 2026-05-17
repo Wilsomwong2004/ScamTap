@@ -21,6 +21,7 @@ class LookupPage extends StatefulWidget {
 class _LookupPageState extends State<LookupPage> {
   bool _showResult = false;
   Map<String, dynamic>? _resultData;
+  bool _isInitialized = false;
 
   @override
   void initState() {
@@ -30,18 +31,20 @@ class _LookupPageState extends State<LookupPage> {
 
   Future<void> _loadLastResult() async {
     final prefs = await SharedPreferences.getInstance();
-    final String? saved = prefs.getString('last_result');
+    final String? saved = prefs.getString('last_result_lookup');
     if (saved != null) {
       setState(() {
         _resultData = jsonDecode(saved);
         _showResult = true;
       });
+
+      _isInitialized = true;
     }
   }
 
   Future<void> _saveResult(Map<String, dynamic> data) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('last_result', jsonEncode(data));
+    await prefs.setString('last_result_lookup', jsonEncode(data));
   }
 
   @override
@@ -132,15 +135,17 @@ class _LookupPageState extends State<LookupPage> {
 
               AnimatedSwitcher(
                 duration: Duration(milliseconds: 400),
-                child: _showResult
-                    ? ScamDetectedColorContainer(
-                        key: ValueKey('result'),
-                        result: _resultData,
-                      )
-                    : SizedBox.shrink(key: ValueKey('empty')),
+                child: !_isInitialized
+                    ? SizedBox.shrink(key: ValueKey('loading'))
+                    : _showResult
+                        ? ScamDetectedColorContainer(
+                            key: ValueKey('result'),
+                            result: _resultData,
+                          )
+                        : SizedBox.shrink(key: ValueKey('empty')),
               ),
 
-              SizedBox(height: 25),
+              SizedBox( height: _showResult ? 25 : 10,),
 
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20),
@@ -149,7 +154,7 @@ class _LookupPageState extends State<LookupPage> {
                   child: Text(
                     "Recent Lookup",
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: FontWeight.w500,
                       color: const Color.fromARGB(255, 255, 255, 255),
                     ),
@@ -219,13 +224,19 @@ class _LookupPageState extends State<LookupPage> {
 
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return Padding(
-                      padding: const EdgeInsets.symmetric(
+                      padding: EdgeInsets.symmetric(
                         horizontal: 28,
-                        vertical: 20,
+                        vertical: _showResult ? 100 : 160,
                       ),
-                      child: Text(
-                        "No record found!",
-                        style: TextStyle(color: Colors.white),
+                      child: Column (
+                        children: [
+                          Icon(Icons.warning_rounded, color: Colors.red, size: 30,),
+                          SizedBox(height: 5),
+                          Text(
+                            "No record found!",
+                            style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
+                          )
+                        ],
                       ),
                     );
                   }

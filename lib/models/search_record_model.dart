@@ -21,12 +21,13 @@ class SearchRecordModel {
 
   factory SearchRecordModel.fromMap(Map<String, dynamic> map) {
     return SearchRecordModel(
-      type: map['type'],
-      value: map['value'],
-      riskScore: map['riskScore'],
-      riskLevel: map['riskLevel'],
-      timestamp: (map['timestamp'] as Timestamp).toDate(),
-      detail: map['detail'],
+      type      : map['type']      ?? 'unknown',
+      value     : map['value']     ?? '',
+      riskScore : (map['riskScore'] as num?)?.toInt() ?? 0,
+      riskLevel : map['riskLevel'] ?? 'UNKNOWN',
+      timestamp : (map['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      detail    : Map<String, dynamic>.from(map['detail'] ?? {}),
+      rawData   : Map<String, dynamic>.from(map), // ← 整个 map 存为 rawData
     );
   }
 
