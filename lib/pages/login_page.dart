@@ -1,9 +1,19 @@
 import 'package:flutter/material.dart';
 import 'register_page.dart';
 import '../widgets/navibar.dart';
+import '../admin/pages/admin_dashboard_page.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final TextEditingController emailController = TextEditingController();
+
+  final TextEditingController passwordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -12,19 +22,13 @@ class LoginPage extends StatelessWidget {
         width: double.infinity,
         height: double.infinity,
 
-        decoration: const BoxDecoration(
-          color: Colors.white,
-        ),
+        decoration: const BoxDecoration(color: Colors.white),
 
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 30,
-            vertical: 80,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 80),
 
           child: Column(
             children: [
-
               const SizedBox(height: 40),
 
               // LOGO
@@ -43,16 +47,12 @@ class LoginPage extends StatelessWidget {
 
               // USERNAME
               TextField(
+                controller: emailController,
                 decoration: InputDecoration(
                   hintText: "Username / Email",
 
                   filled: true,
-                  fillColor: const Color.fromARGB(
-                    255,
-                    233,
-                    247,
-                    235,
-                  ),
+                  fillColor: const Color.fromARGB(255, 233, 247, 235),
 
                   prefixIcon: const Icon(Icons.person),
 
@@ -67,18 +67,14 @@ class LoginPage extends StatelessWidget {
 
               // PASSWORD
               TextField(
+                controller: passwordController,
                 obscureText: true,
 
                 decoration: InputDecoration(
                   hintText: "Password",
 
                   filled: true,
-                  fillColor: const Color.fromARGB(
-                    255,
-                    233,
-                    247,
-                    235,
-                  ),
+                  fillColor: const Color.fromARGB(255, 233, 247, 235),
 
                   prefixIcon: const Icon(Icons.lock),
 
@@ -113,19 +109,35 @@ class LoginPage extends StatelessWidget {
 
                 child: ElevatedButton(
                   onPressed: () {
+                    String email = emailController.text.trim();
 
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const Navibar(),
-                      ),
-                    );
+                    String password = passwordController.text.trim();
 
+                    // ADMIN LOGIN
+                    if (email == "admin@scamtap.com" &&
+                        password == "admin123") {
+                      Navigator.pushReplacement(
+                        context,
+
+                        MaterialPageRoute(
+                          builder: (context) => const AdminDashboardPage(),
+                        ),
+                      );
+                    }
+                    // NORMAL USER LOGIN
+                    else {
+                      Navigator.pushReplacement(
+                        context,
+
+                        MaterialPageRoute(
+                          builder: (context) => const Navibar(),
+                        ),
+                      );
+                    }
                   },
 
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        const Color.fromARGB(255, 44, 106, 46),
+                    backgroundColor: const Color.fromARGB(255, 44, 106, 46),
 
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
@@ -179,14 +191,12 @@ class LoginPage extends StatelessWidget {
               // REGISTER
               GestureDetector(
                 onTap: () {
-
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => const RegisterPage(),
                     ),
                   );
-
                 },
 
                 child: const Text(
@@ -208,17 +218,9 @@ class LoginPage extends StatelessWidget {
   Widget socialButton(IconData icon) {
     return CircleAvatar(
       radius: 22,
-      backgroundColor: const Color.fromARGB(
-        255,
-        233,
-        247,
-        235,
-      ),
+      backgroundColor: const Color.fromARGB(255, 233, 247, 235),
 
-      child: Icon(
-        icon,
-        color: Colors.green,
-      ),
+      child: Icon(icon, color: Colors.green),
     );
   }
 }
