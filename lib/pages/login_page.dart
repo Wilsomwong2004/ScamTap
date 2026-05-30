@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'register_page.dart';
 import '../widgets/navibar.dart';
 import '../admin/pages/admin_dashboard_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -108,29 +109,70 @@ class _LoginPageState extends State<LoginPage> {
                 height: 55,
 
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     String email = emailController.text.trim();
 
                     String password = passwordController.text.trim();
 
-                    // ADMIN LOGIN
-                    if (email == "admin@scamtap.com" &&
-                        password == "admin123") {
-                      Navigator.pushReplacement(
-                        context,
+                    try {
 
-                        MaterialPageRoute(
-                          builder: (context) => const AdminDashboardPage(),
-                        ),
-                      );
+                      QuerySnapshot userData =
+                          await FirebaseFirestore.instance
+                              .collection("usersData")
+                              .where("Email", isEqualTo: email)
+                              .where("Password", isEqualTo: password)
+                              .get();
+
+                      if (userData.docs.isNotEmpty) {
+
+                        var user = userData.docs.first;
+
+                        String role = user["Role"];
+
+                        // ADMIN LOGIN
+                        if (role == "admin") {
+
+                          Navigator.pushReplacement(
+                            context,
+
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const AdminDashboardPage(),
+                            ),
+                          );
+                        }
+
+                        // NORMAL USER LOGIN
+                        else {
+
+                          Navigator.pushReplacement(
+                            context,
+
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const Navibar(),
+                            ),
+                          );
+                        }
+                      }
+
+                      else {
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Invalid Email or Password"),
+                          ),
+                        );
+                      }
                     }
-                    // NORMAL USER LOGIN
-                    else {
-                      Navigator.pushReplacement(
-                        context,
 
-                        MaterialPageRoute(
-                          builder: (context) => const Navibar(),
+                    catch (e) {
+
+                      print(e);
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Login Failed"),
                         ),
                       );
                     }
