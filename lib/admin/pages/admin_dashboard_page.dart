@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'manage_users_page.dart';
 import 'manage_reports_page.dart';
@@ -15,6 +16,33 @@ class AdminDashboardPage extends StatefulWidget {
 
 class _AdminDashboardPageState extends State<AdminDashboardPage> {
   int selectedIndex = 0;
+
+  int totalUsers = 0;
+  int totalReports = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    loadDashboardData();
+  }
+
+  Future<void> loadDashboardData() async {
+
+    // TOTAL USERS
+    var users = await FirebaseFirestore.instance
+        .collection('usersData')
+        .get();
+
+    // TOTAL REPORTS
+    var reports = await FirebaseFirestore.instance
+        .collection('scam_checks')
+        .get();
+
+    setState(() {
+      totalUsers = users.docs.length;
+      totalReports = reports.docs.length;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +104,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 Expanded(
                   child: dashboardCard(
                     title: "Total Users",
-                    value: "120",
+                    value: "$totalUsers",
                     icon: Icons.people,
                     color: Colors.blue,
                   ),
@@ -87,7 +115,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 Expanded(
                   child: dashboardCard(
                     title: "Reports",
-                    value: "45",
+                    value: "$totalReports",
                     icon: Icons.report,
                     color: Colors.red,
                   ),

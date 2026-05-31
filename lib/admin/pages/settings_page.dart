@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../pages/login_page.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -96,11 +97,15 @@ class SettingsPage extends StatelessWidget {
               height: 55,
 
               child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pushReplacement(
+                onPressed: () async {
+                  await FirebaseAuth.instance.signOut();
+
+                  Navigator.pushAndRemoveUntil(
                     context,
 
                     MaterialPageRoute(builder: (context) => const LoginPage()),
+
+                    (route) => false,
                   );
                 },
 
@@ -140,27 +145,360 @@ class SettingsPage extends StatelessWidget {
 
       child: GestureDetector(
         onTap: () {
-          showDialog(
-            context: context,
+          // MANAGE PROFILE
+          if (title == "Manage Profile") {
+            TextEditingController usernameController = TextEditingController(
+              text: "Admin",
+            );
 
-            builder: (context) {
-              return AlertDialog(
-                title: Text(title),
+            TextEditingController emailController = TextEditingController(
+              text: "admin@scamtap.com",
+            );
 
-                content: Text("$title feature coming soon!"),
+            showDialog(
+              context: context,
 
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-
-                    child: const Text("OK"),
+              builder: (context) {
+                return AlertDialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
                   ),
-                ],
-              );
-            },
-          );
+
+                  title: const Text(
+                    "Manage Profile",
+
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+
+                  content: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+
+                      children: [
+                        CircleAvatar(
+                          radius: 40,
+                          backgroundColor: Colors.green.shade700,
+
+                          child: const Icon(
+                            Icons.admin_panel_settings,
+                            color: Colors.white,
+                            size: 40,
+                          ),
+                        ),
+
+                        const SizedBox(height: 25),
+
+                        TextField(
+                          controller: usernameController,
+
+                          decoration: InputDecoration(
+                            labelText: "Username",
+
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        TextField(
+                          controller: emailController,
+
+                          decoration: InputDecoration(
+                            labelText: "Email",
+
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+
+                      child: const Text(
+                        "Cancel",
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Profile Updated Successfully"),
+                          ),
+                        );
+                      },
+
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                      ),
+
+                      child: const Text(
+                        "Save",
+
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          }
+          // SECURITY SETTINGS
+          else if (title == "Security Settings") {
+            TextEditingController passwordController = TextEditingController();
+
+            TextEditingController confirmController = TextEditingController();
+
+            showDialog(
+              context: context,
+
+              builder: (context) {
+                return AlertDialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+
+                  title: const Text(
+                    "Security Settings",
+
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+
+                  content: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+
+                      children: [
+                        TextField(
+                          controller: passwordController,
+                          obscureText: true,
+
+                          decoration: InputDecoration(
+                            labelText: "New Password",
+
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        TextField(
+                          controller: confirmController,
+                          obscureText: true,
+
+                          decoration: InputDecoration(
+                            labelText: "Confirm Password",
+
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+
+                      child: const Text("Cancel"),
+                    ),
+
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Password Updated Successfully"),
+                          ),
+                        );
+                      },
+
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                      ),
+
+                      child: const Text(
+                        "Save",
+
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          }
+          // NOTIFICATION SETTINGS
+          else if (title == "Notification Settings") {
+            showDialog(
+              context: context,
+
+              builder: (context) {
+                bool scamAlert = true;
+                bool emailAlert = true;
+                bool pushAlert = false;
+
+                return StatefulBuilder(
+                  builder: (context, setState) {
+                    return AlertDialog(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+
+                      title: const Text(
+                        "Notification Settings",
+
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+
+                        children: [
+                          SwitchListTile(
+                            value: scamAlert,
+
+                            onChanged: (value) {
+                              setState(() {
+                                scamAlert = value;
+                              });
+                            },
+
+                            title: const Text("Scam Alerts"),
+                          ),
+
+                          SwitchListTile(
+                            value: emailAlert,
+
+                            onChanged: (value) {
+                              setState(() {
+                                emailAlert = value;
+                              });
+                            },
+
+                            title: const Text("Email Notifications"),
+                          ),
+
+                          SwitchListTile(
+                            value: pushAlert,
+
+                            onChanged: (value) {
+                              setState(() {
+                                pushAlert = value;
+                              });
+                            },
+
+                            title: const Text("Push Notifications"),
+                          ),
+                        ],
+                      ),
+
+                      actions: [
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Notification Settings Saved"),
+                              ),
+                            );
+                          },
+
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                          ),
+
+                          child: const Text(
+                            "Save",
+
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+            );
+          }
+          // ABOUT SYSTEM
+          else {
+            showDialog(
+              context: context,
+
+              builder: (context) {
+                return AlertDialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+
+                  title: const Text(
+                    "About ScamTap",
+
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+
+                  content: const Column(
+                    mainAxisSize: MainAxisSize.min,
+
+                    crossAxisAlignment: CrossAxisAlignment.start,
+
+                    children: [
+                      Text("Version: 1.0.0"),
+
+                      SizedBox(height: 10),
+
+                      Text("Developer: ScamTap Team"),
+
+                      SizedBox(height: 10),
+
+                      Text(
+                        "ScamTap helps users detect scam phone numbers, suspicious links and dangerous messages using AI-powered scam analysis.",
+                      ),
+                    ],
+                  ),
+
+                  actions: [
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                      ),
+
+                      child: const Text(
+                        "OK",
+
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          }
         },
 
         child: Container(

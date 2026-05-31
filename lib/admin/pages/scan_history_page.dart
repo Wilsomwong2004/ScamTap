@@ -44,14 +44,27 @@ class ScanHistoryPage extends StatelessWidget {
             itemBuilder: (context, index) {
               var data = docs[index];
 
-              String type = data['type'] ?? "";
-              String value = data['value'] ?? "";
-              String verdict = data['verdict'] ?? "Unknown";
+              String type = "";
+
+              if (data.data().toString().contains('type')) {
+                type = data['type'] ?? "Unknown";
+              }
+
+              String value = "";
+
+              if (data.data().toString().contains('value')) {
+                value = data['value'];
+              }
+              String verdict = "Unknown";
+
+              if (data.data().toString().contains('verdict')) {
+                verdict = data['verdict'] ?? "Unknown";
+              }
 
               int riskScore = 0;
 
-              if (data['risk_score'] != null) {
-                riskScore = data['risk_score'];
+              if (data.data().toString().contains('ai_analysis')) {
+                riskScore = data['ai_analysis']['risk_score'] ?? 0;
               }
 
               Color riskColor = Colors.green;

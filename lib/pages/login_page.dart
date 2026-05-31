@@ -3,6 +3,8 @@ import 'register_page.dart';
 import '../widgets/navibar.dart';
 import '../admin/pages/admin_dashboard_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -16,6 +18,33 @@ class _LoginPageState extends State<LoginPage> {
 
   final TextEditingController passwordController = TextEditingController();
 
+  Future<void> signInWithGoogle() async {
+    try {
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+
+      if (googleUser == null) {
+        return;
+      }
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      await FirebaseAuth.instance.signInWithCredential(credential);
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const Navibar()),
+      );
+    } catch (e) {
+      print(e);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,7 +55,7 @@ class _LoginPageState extends State<LoginPage> {
         decoration: const BoxDecoration(color: Colors.white),
 
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 80),
+          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 95),
 
           child: Column(
             children: [
@@ -115,65 +144,49 @@ class _LoginPageState extends State<LoginPage> {
                     String password = passwordController.text.trim();
 
                     try {
-
-                      QuerySnapshot userData =
-                          await FirebaseFirestore.instance
-                              .collection("usersData")
-                              .where("Email", isEqualTo: email)
-                              .where("Password", isEqualTo: password)
-                              .get();
+                      QuerySnapshot userData = await FirebaseFirestore.instance
+                          .collection("usersData")
+                          .where("Email", isEqualTo: email)
+                          .where("Password", isEqualTo: password)
+                          .get();
 
                       if (userData.docs.isNotEmpty) {
-
                         var user = userData.docs.first;
 
                         String role = user["Role"];
 
                         // ADMIN LOGIN
                         if (role == "admin") {
-
                           Navigator.pushReplacement(
                             context,
 
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  const AdminDashboardPage(),
+                              builder: (context) => const AdminDashboardPage(),
                             ),
                           );
                         }
-
                         // NORMAL USER LOGIN
                         else {
-
                           Navigator.pushReplacement(
                             context,
 
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  const Navibar(),
+                              builder: (context) => const Navibar(),
                             ),
                           );
                         }
-                      }
-
-                      else {
-
+                      } else {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text("Invalid Email or Password"),
                           ),
                         );
                       }
-                    }
-
-                    catch (e) {
-
+                    } catch (e) {
                       print(e);
 
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Login Failed"),
-                        ),
+                        const SnackBar(content: Text("Login Failed")),
                       );
                     }
                   },
@@ -216,7 +229,10 @@ class _LoginPageState extends State<LoginPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
 
                 children: [
-                  socialButton(Icons.g_mobiledata),
+                  GestureDetector(
+                    onTap: signInWithGoogle,
+                    child: socialButton(Icons.g_mobiledata),
+                  ),
 
                   const SizedBox(width: 15),
 
