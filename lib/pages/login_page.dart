@@ -117,15 +117,45 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 10),
 
-              const Align(
+              Align(
                 alignment: Alignment.centerRight,
 
-                child: Text(
-                  "Forgot Password?",
+                child: GestureDetector(
+                  onTap: () async {
+                    if (emailController.text.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Enter your email first")),
+                      );
 
-                  style: TextStyle(
-                    color: Color.fromARGB(255, 44, 106, 46),
-                    fontWeight: FontWeight.w500,
+                      return;
+                    }
+
+                    try {
+                      await FirebaseAuth.instance.sendPasswordResetEmail(
+                        email: emailController.text.trim(),
+                      );
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Password reset email sent"),
+                        ),
+                      );
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Failed to send reset email"),
+                        ),
+                      );
+                    }
+                  },
+
+                  child: const Text(
+                    "Forgot Password?",
+
+                    style: TextStyle(
+                      color: Color.fromARGB(255, 44, 106, 46),
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ),
@@ -233,14 +263,6 @@ class _LoginPageState extends State<LoginPage> {
                     onTap: signInWithGoogle,
                     child: socialButton(Icons.g_mobiledata),
                   ),
-
-                  const SizedBox(width: 15),
-
-                  socialButton(Icons.facebook),
-
-                  const SizedBox(width: 15),
-
-                  socialButton(Icons.apple),
                 ],
               ),
 

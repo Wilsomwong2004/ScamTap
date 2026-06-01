@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ManageReportsPage extends StatelessWidget {
   const ManageReportsPage({super.key});
@@ -13,7 +14,7 @@ class ManageReportsPage extends StatelessWidget {
         elevation: 0,
 
         title: const Text(
-          "Manage Scam Reports",
+          "Manage Reports",
 
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
@@ -21,223 +22,299 @@ class ManageReportsPage extends StatelessWidget {
         iconTheme: const IconThemeData(color: Colors.black),
       ),
 
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('scam_reports')
+            .snapshots(),
 
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        builder: (context, snapshot) {
+          // LOADING
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-          children: [
-            // TITLE
-            const Text(
-              "Scam Reports Overview",
+          // NO DATA
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const Center(child: Text("No Reports Found"));
+          }
 
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-            ),
+          var reports = snapshot.data!.docs;
 
-            const SizedBox(height: 8),
+          return ListView.builder(
+            padding: const EdgeInsets.all(20),
 
-            const Text(
-              "Review and manage scam reports submitted by users.",
+            itemCount: reports.length,
 
-              style: TextStyle(fontSize: 15, color: Colors.grey),
-            ),
+            itemBuilder: (context, index) {
+              var report = reports[index];
 
-            const SizedBox(height: 30),
+              Map<String, dynamic> data = report.data() as Map<String, dynamic>;
 
-            // REPORTS
-            reportCard(
-              title: "SMS Phishing",
-              description:
-                  "Fake banking SMS asking users to click suspicious links.",
+              String scamType = data['scamType'] ?? "Unknown";
 
-              status: "Pending",
-              statusColor: Colors.orange,
+              String description =
+                  data['reportDescription'] ?? "No description";
 
-              icon: Icons.sms,
-            ),
+              String status = data['reportStatus'] ?? "Pending";
 
-            const SizedBox(height: 18),
+              int riskLevel = 0;
 
-            reportCard(
-              title: "Fake Bank Link",
-              description:
-                  "Suspicious website pretending to be official bank portal.",
+              // FIX RISK LEVEL
+              if (data['riskLevel'] != null) {
+                if (data['riskLevel'] is int) {
+                  riskLevel = data['riskLevel'];
+                } else if (data['riskLevel'] is String) {
+                  riskLevel = int.tryParse(data['riskLevel']) ?? 0;
+                }
+              }
 
-              status: "Approved",
-              statusColor: Colors.green,
+              // STATUS COLOR
+              Color statusColor = Colors.orange;
 
-              icon: Icons.link,
-            ),
+              if (status == "Approved") {
+                statusColor = Colors.green;
+              } else if (status == "Rejected") {
+                statusColor = Colors.red;
+              }
 
-            const SizedBox(height: 18),
+              // ICON
+              IconData iconData = Icons.warning;
 
-            reportCard(
-              title: "Suspicious Call",
-              description:
-                  "Unknown caller pretending to be government officer.",
+              if (scamType.toLowerCase().contains("sms")) {
+                iconData = Icons.sms;
+              } else if (scamType.toLowerCase().contains("link")) {
+                iconData = Icons.link;
+              } else if (scamType.toLowerCase().contains("call")) {
+                iconData = Icons.call;
+              }
 
-              status: "Rejected",
-              statusColor: Colors.red,
+              return Container(
+                margin: const EdgeInsets.only(bottom: 20),
 
-              icon: Icons.call,
-            ),
-
-            const SizedBox(height: 18),
-
-            reportCard(
-              title: "QR Code Scam",
-              description:
-                  "Users reported fake QR payment stickers in public areas.",
-
-              status: "Pending",
-              statusColor: Colors.orange,
-
-              icon: Icons.qr_code,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget reportCard({
-    required String title,
-    required String description,
-    required String status,
-    required Color statusColor,
-    required IconData icon,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-
-      decoration: BoxDecoration(
-        color: Colors.white,
-
-        borderRadius: BorderRadius.circular(22),
-
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-
-        children: [
-          // TOP ROW
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: statusColor.withOpacity(0.15),
-
-                child: Icon(icon, color: statusColor),
-              ),
-
-              const SizedBox(width: 15),
-
-              Expanded(
-                child: Text(
-                  title,
-
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 7,
-                ),
+                padding: const EdgeInsets.all(22),
 
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.15),
+                  color: Colors.white,
 
-                  borderRadius: BorderRadius.circular(20),
-                ),
+                  borderRadius: BorderRadius.circular(28),
 
-                child: Text(
-                  status,
-
-                  style: TextStyle(
-                    color: statusColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 18),
-
-          // DESCRIPTION
-          Text(
-            description,
-
-            style: const TextStyle(
-              color: Colors.grey,
-              fontSize: 14,
-              height: 1.5,
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // BUTTONS
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () {},
-
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 12,
                     ),
-                  ),
-
-                  child: const Text(
-                    "Approve",
-
-                    style: TextStyle(color: Colors.white),
-                  ),
+                  ],
                 ),
-              ),
 
-              const SizedBox(width: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
 
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () {},
+                  children: [
+                    // TOP ROW
+                    Row(
+                      children: [
+                        // ICON
+                        Container(
+                          padding: const EdgeInsets.all(16),
 
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
+                          decoration: BoxDecoration(
+                            color: statusColor.withOpacity(0.15),
 
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
+                            shape: BoxShape.circle,
+                          ),
+
+                          child: Icon(iconData, color: statusColor, size: 28),
+                        ),
+
+                        const SizedBox(width: 16),
+
+                        // TITLE
+                        Expanded(
+                          child: Text(
+                            scamType,
+
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+
+                        // STATUS
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+
+                          decoration: BoxDecoration(
+                            color: statusColor.withOpacity(0.15),
+
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+
+                          child: Text(
+                            status,
+
+                            style: TextStyle(
+                              color: statusColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
 
-                  child: const Text(
-                    "Reject",
+                    const SizedBox(height: 22),
 
-                    style: TextStyle(color: Colors.white),
-                  ),
+                    // DESCRIPTION
+                    Text(
+                      description,
+
+                      style: TextStyle(
+                        color: Colors.grey.shade700,
+                        fontSize: 15,
+                        height: 1.4,
+                      ),
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    // RISK LEVEL
+                    Text(
+                      "Risk Level: $riskLevel",
+
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
+
+                    const SizedBox(height: 25),
+
+                    // BUTTONS
+                    Row(
+                      children: [
+                        // APPROVE
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              // UPDATE REPORT STATUS
+                              await FirebaseFirestore.instance
+                                  .collection('scam_reports')
+                                  .doc(report.id)
+                                  .update({'reportStatus': 'Approved'});
+
+                              // CREATE NOTIFICATION
+                              await FirebaseFirestore.instance
+                                  .collection('notifications')
+                                  .add({
+                                    'title': 'Report Approved',
+
+                                    'message':
+                                        'Your scam report has been approved by admin.',
+
+                                    'targetUser': data['reportBy'] ?? '',
+
+                                    'createdAt': DateTime.now(),
+
+                                    'isRead': false,
+                                  });
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("Report Approved"),
+                                ),
+                              );
+                            },
+
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+
+                            child: const Text(
+                              "Approve",
+
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(width: 16),
+
+                        // REJECT
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              // UPDATE REPORT STATUS
+                              await FirebaseFirestore.instance
+                                  .collection('scam_reports')
+                                  .doc(report.id)
+                                  .update({'reportStatus': 'Rejected'});
+
+                              // CREATE NOTIFICATION
+                              await FirebaseFirestore.instance
+                                  .collection('notifications')
+                                  .add({
+                                    'title': 'Report Rejected',
+
+                                    'message':
+                                        'Your scam report has been rejected by admin.',
+
+                                    'targetUser': data['reportBy'] ?? '',
+
+                                    'createdAt': DateTime.now(),
+
+                                    'isRead': false,
+                                  });
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("Report Rejected"),
+                                ),
+                              );
+                            },
+
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+
+                            child: const Text(
+                              "Reject",
+
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
-        ],
+              );
+            },
+          );
+        },
       ),
     );
   }

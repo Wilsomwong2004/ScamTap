@@ -1,7 +1,46 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class NotificationsPage extends StatelessWidget {
+class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
+
+  @override
+  State<NotificationsPage> createState() => _NotificationsPageState();
+}
+
+class _NotificationsPageState extends State<NotificationsPage> {
+  final TextEditingController titleController = TextEditingController();
+
+  final TextEditingController messageController = TextEditingController();
+
+  Future<void> sendNotification() async {
+    if (titleController.text.isEmpty || messageController.text.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Please fill all fields")));
+
+      return;
+    }
+
+    await FirebaseFirestore.instance.collection('notifications').add({
+      'title': titleController.text.trim(),
+
+      'message': messageController.text.trim(),
+
+      'targetUser': 'all',
+
+      'createdAt': Timestamp.now(),
+
+      'isRead': false,
+    });
+
+    titleController.clear();
+    messageController.clear();
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text("Notification Sent")));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,245 +64,177 @@ class NotificationsPage extends StatelessWidget {
         padding: const EdgeInsets.all(20),
 
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-
           children: [
-            // TITLE
-            const Text(
-              "Broadcast Notifications",
-
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-            ),
-
-            const SizedBox(height: 8),
-
-            const Text(
-              "Send announcements and alerts to ScamTap users.",
-
-              style: TextStyle(fontSize: 15, color: Colors.grey),
-            ),
-
-            const SizedBox(height: 30),
-
-            // TITLE FIELD
             Container(
+              padding: const EdgeInsets.all(20),
+
               decoration: BoxDecoration(
                 color: Colors.white,
 
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(25),
 
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
                   ),
                 ],
               ),
 
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: "Notification Title",
+              child: Column(
+                children: [
+                  TextField(
+                    controller: titleController,
 
-                  prefixIcon: const Icon(Icons.title),
+                    decoration: InputDecoration(
+                      hintText: "Notification Title",
 
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
+                      filled: true,
 
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-            ),
+                      fillColor: const Color(0xFFF3F7F1),
 
-            const SizedBox(height: 25),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(18),
 
-            // MESSAGE FIELD
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-
-                borderRadius: BorderRadius.circular(20),
-
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-
-              child: TextField(
-                maxLines: 6,
-
-                decoration: InputDecoration(
-                  hintText: "Type notification message here...",
-
-                  alignLabelWithHint: true,
-
-                  prefixIcon: const Padding(
-                    padding: EdgeInsets.only(bottom: 90),
-
-                    child: Icon(Icons.message_outlined),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
                   ),
 
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
+                  const SizedBox(height: 20),
 
-                    borderSide: BorderSide.none,
+                  TextField(
+                    controller: messageController,
+
+                    maxLines: 5,
+
+                    decoration: InputDecoration(
+                      hintText: "Notification Message",
+
+                      filled: true,
+
+                      fillColor: const Color(0xFFF3F7F1),
+
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(18),
+
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ),
 
-            const SizedBox(height: 30),
+                  const SizedBox(height: 25),
 
-            // SEND BUTTON
-            SizedBox(
-              width: double.infinity,
-              height: 55,
+                  SizedBox(
+                    width: double.infinity,
+                    height: 55,
 
-              child: ElevatedButton(
-                onPressed: () {
-                  showDialog(
-                    context: context,
+                    child: ElevatedButton(
+                      onPressed: sendNotification,
 
-                    builder: (context) {
-                      return AlertDialog(
-                        title: const Text("Notification Sent"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
 
-                        content: const Text(
-                          "Your notification has been sent successfully.",
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
                         ),
+                      ),
 
-                        actions: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
+                      child: const Text(
+                        "Send Notification",
 
-                            child: const Text("OK"),
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                },
-
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green.shade700,
-
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-
-                child: const Text(
-                  "Send Notification",
-
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                ],
               ),
             ),
 
-            const SizedBox(height: 35),
+            const SizedBox(height: 30),
 
-            // RECENT NOTIFICATIONS
-            const Text(
-              "Recent Notifications",
+            const Align(
+              alignment: Alignment.centerLeft,
 
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
+              child: Text(
+                "Recent Notifications",
 
-            const SizedBox(height: 20),
-
-            notificationCard(
-              title: "Scam Alert",
-              message: "Beware of fake banking SMS spreading recently.",
-              color: Colors.red,
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
             ),
 
             const SizedBox(height: 15),
 
-            notificationCard(
-              title: "System Maintenance",
-              message: "ScamTap system maintenance tonight at 12AM.",
-              color: Colors.orange,
+            StreamBuilder(
+              stream: FirebaseFirestore.instance
+                  .collection('notifications')
+                  .orderBy('createdAt', descending: true)
+                  .snapshots(),
+
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                var notifications = snapshot.data!.docs;
+
+                return ListView.builder(
+                  shrinkWrap: true,
+
+                  physics: const NeverScrollableScrollPhysics(),
+
+                  itemCount: notifications.length,
+
+                  itemBuilder: (context, index) {
+                    var data = notifications[index];
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 15),
+
+                      padding: const EdgeInsets.all(18),
+
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+
+                        borderRadius: BorderRadius.circular(20),
+
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+
+                        children: [
+                          Text(
+                            data['title'] ?? "",
+
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+
+                          const SizedBox(height: 10),
+
+                          Text(data['message'] ?? ""),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget notificationCard({
-    required String title,
-    required String message,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-
-      decoration: BoxDecoration(
-        color: Colors.white,
-
-        borderRadius: BorderRadius.circular(20),
-
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-
-        children: [
-          CircleAvatar(
-            backgroundColor: color.withOpacity(0.15),
-
-            child: Icon(Icons.notifications_active, color: color),
-          ),
-
-          const SizedBox(width: 15),
-
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-
-              children: [
-                Text(
-                  title,
-
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                const SizedBox(height: 6),
-
-                Text(
-                  message,
-
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 14,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

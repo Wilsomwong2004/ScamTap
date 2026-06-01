@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../pages/login_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -204,6 +205,7 @@ class SettingsPage extends StatelessWidget {
 
                         TextField(
                           controller: emailController,
+                          readOnly: true,
 
                           decoration: InputDecoration(
                             labelText: "Email",
@@ -230,7 +232,14 @@ class SettingsPage extends StatelessWidget {
                     ),
 
                     ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
+                        await FirebaseFirestore.instance
+                            .collection('usersData')
+                            .doc('GXVenKdMfrr13qJg1SzB')
+                            .update({
+                              'Username': usernameController.text,
+                            });
+
                         Navigator.pop(context);
 
                         ScaffoldMessenger.of(context).showSnackBar(
