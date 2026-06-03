@@ -96,15 +96,17 @@ class _RegisterPageState extends State<RegisterPage> {
 
                   try {
                     // CREATE AUTH ACC
-                    await FirebaseAuth.instance.createUserWithEmailAndPassword(
+                    final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
                       email: email,
                       password: password,
                     );
 
                     // SAVE DATA TO FIREBASE
+                    final uid = userCredential.user!.uid;
                     await FirebaseFirestore.instance
                         .collection("usersData")
-                        .add({
+                        .doc(uid)
+                        .set({
                           "Username": username,
                           "Email": email,
                           "Password": password,

@@ -2,14 +2,43 @@ import 'package:flutter/material.dart';
 import 'package:ScamTap/widgets/miniprofile.dart';
 import 'package:ScamTap/pages/message_page.dart';
 import 'package:ScamTap/pages/lookup_page.dart';
+import 'package:ScamTap/models/users_model.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  String _username = '';
+  bool _usernameLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!_usernameLoaded) {
+      _loadUsername();
+      _usernameLoaded = true;
+    }
+  }
+
+  Future<void> _loadUsername() async {
+    final name = await UserModel.getUsername();
+    setState(() {
+      _username = name;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
+        elevation: 0,
         title: Padding(
           padding: const EdgeInsets.only(left: 8),
           child: Text(
@@ -36,7 +65,7 @@ class HomePage extends StatelessWidget {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.only(bottom: 100),
+        padding: EdgeInsets.only(top: kToolbarHeight + 50, bottom: 120),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -56,7 +85,7 @@ class HomePage extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "Wilsomwong!",
+                    "$_username!",
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,

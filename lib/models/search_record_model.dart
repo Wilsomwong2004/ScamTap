@@ -27,7 +27,7 @@ class SearchRecordModel {
       riskLevel : map['riskLevel'] ?? 'UNKNOWN',
       timestamp : (map['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
       detail    : Map<String, dynamic>.from(map['detail'] ?? {}),
-      rawData   : Map<String, dynamic>.from(map), // ← 整个 map 存为 rawData
+      rawData   : Map<String, dynamic>.from(map),
     );
   }
 
