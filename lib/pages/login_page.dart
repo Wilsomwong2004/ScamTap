@@ -187,22 +187,26 @@ class _LoginPageState extends State<LoginPage> {
 
                         // ADMIN LOGIN
                         if (role == "admin") {
-                          Navigator.pushReplacement(
+                          Navigator.pushAndRemoveUntil(
                             context,
 
                             MaterialPageRoute(
                               builder: (context) => const AdminDashboardPage(),
                             ),
+
+                            (route) => false,
                           );
                         }
                         // NORMAL USER LOGIN
                         else {
-                          Navigator.pushReplacement(
+                          Navigator.pushAndRemoveUntil(
                             context,
 
                             MaterialPageRoute(
                               builder: (context) => const Navibar(),
                             ),
+
+                            (route) => false,
                           );
                         }
                       } else {

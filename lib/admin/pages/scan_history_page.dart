@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'admin_dashboard_page.dart';
+import 'manage_users_page.dart';
+import 'manage_reports_page.dart';
+import 'notifications_page.dart';
+import 'settings_page.dart';
 
 class ScanHistoryPage extends StatelessWidget {
   const ScanHistoryPage({super.key});
@@ -38,7 +43,7 @@ class ScanHistoryPage extends StatelessWidget {
           var docs = snapshot.data!.docs;
 
           return ListView.builder(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
             itemCount: docs.length,
 
             itemBuilder: (context, index) {
@@ -152,8 +157,8 @@ class ScanHistoryPage extends StatelessWidget {
 
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
+                        horizontal: 18,
+                        vertical: 10,
                       ),
 
                       decoration: BoxDecoration(
@@ -177,6 +182,131 @@ class ScanHistoryPage extends StatelessWidget {
           );
         },
       ),
+
+      bottomNavigationBar: adminNavbar(context),
     );
   }
+}
+
+Widget adminNavbar(BuildContext context) {
+  return Container(
+    margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+
+    decoration: BoxDecoration(
+      color: Colors.white,
+
+      borderRadius: BorderRadius.circular(40),
+
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black12,
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    ),
+
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+
+      children: [
+        // DASHBOARD
+        navButton(
+          context,
+          Icons.dashboard,
+          "Dashboard",
+          const AdminDashboardPage(),
+          false,
+        ),
+
+        // USERS
+        navButton(
+          context,
+          Icons.people,
+          "Users",
+          const ManageUsersPage(),
+          false,
+        ),
+
+        // REPORTS
+        navButton(
+          context,
+          Icons.report,
+          "Reports",
+          const ManageReportsPage(),
+          false,
+        ),
+
+        // NOTIFICATIONS
+        navButton(
+          context,
+          Icons.notifications,
+          "Alerts",
+          const NotificationsPage(),
+          false,
+        ),
+
+        // SETTINGS
+        navButton(
+          context,
+          Icons.settings,
+          "Settings",
+          const SettingsPage(),
+          false,
+        ),
+      ],
+    ),
+  );
+}
+
+Widget navButton(
+  BuildContext context,
+  IconData icon,
+  String label,
+  Widget page,
+  bool isSelected,
+) {
+  return GestureDetector(
+    onTap: () {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => page),
+      );
+    },
+
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+
+      margin: const EdgeInsets.symmetric(vertical: 10),
+
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+
+      decoration: BoxDecoration(
+        color: isSelected ? Colors.green : Colors.transparent,
+
+        borderRadius: BorderRadius.circular(30),
+      ),
+
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+
+        children: [
+          Icon(icon, size: 24, color: isSelected ? Colors.white : Colors.grey),
+
+          const SizedBox(height: 4),
+
+          Text(
+            label,
+
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+
+              color: isSelected ? Colors.white : Colors.grey,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }

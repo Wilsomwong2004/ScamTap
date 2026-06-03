@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'settings_page.dart';
+import 'admin_dashboard_page.dart';
+import 'manage_reports_page.dart';
 
 class ManageUsersPage extends StatelessWidget {
   const ManageUsersPage({super.key});
@@ -10,55 +13,40 @@ class ManageUsersPage extends StatelessWidget {
       backgroundColor: const Color(0xFFF3F7F1),
 
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFF3F7F1),
         elevation: 0,
 
         title: const Text(
           "Manage Users",
 
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
 
-        iconTheme: const IconThemeData(
-          color: Colors.black,
-        ),
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
 
       body: StreamBuilder(
-        stream: FirebaseFirestore.instance
-            .collection("usersData")
-            .snapshots(),
+        stream: FirebaseFirestore.instance.collection("usersData").snapshots(),
 
         builder: (context, snapshot) {
-
           if (!snapshot.hasData) {
-
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
 
           var users = snapshot.data!.docs;
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
 
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
 
               children: [
-
                 // TITLE
                 const Text(
                   "User Management",
 
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                 ),
 
                 const SizedBox(height: 8),
@@ -66,35 +54,26 @@ class ManageUsersPage extends StatelessWidget {
                 const Text(
                   "Manage user accounts and permissions.",
 
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Colors.grey,
-                  ),
+                  style: TextStyle(fontSize: 15, color: Colors.grey),
                 ),
 
                 const SizedBox(height: 30),
 
                 // FIREBASE USERS
                 ...users.map((user) {
+                  String username = user["Username"] ?? "No Name";
 
-                  String username =
-                      user["Username"] ?? "No Name";
+                  String email = user["Email"] ?? "No Email";
 
-                  String email =
-                      user["Email"] ?? "No Email";
+                  String role = user["Role"] ?? "User";
 
-                  String role =
-                      user["Role"] ?? "User";
+                  Color roleColor = role == "admin"
+                      ? Colors.green
+                      : Colors.blue;
 
-                  Color roleColor =
-                      role == "admin"
-                          ? Colors.green
-                          : Colors.blue;
-
-                  IconData roleIcon =
-                      role == "admin"
-                          ? Icons.admin_panel_settings
-                          : Icons.person;
+                  IconData roleIcon = role == "admin"
+                      ? Icons.admin_panel_settings
+                      : Icons.person;
 
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 18),
@@ -114,6 +93,8 @@ class ManageUsersPage extends StatelessWidget {
           );
         },
       ),
+
+      bottomNavigationBar: adminNavbar(context),
     );
   }
 
@@ -125,7 +106,6 @@ class ManageUsersPage extends StatelessWidget {
     required IconData icon,
     required Color color,
   }) {
-
     return Container(
       padding: const EdgeInsets.all(18),
 
@@ -145,19 +125,14 @@ class ManageUsersPage extends StatelessWidget {
 
       child: Column(
         children: [
-
           // TOP ROW
           Row(
             children: [
-
               CircleAvatar(
                 radius: 26,
                 backgroundColor: color.withOpacity(0.15),
 
-                child: Icon(
-                  icon,
-                  color: color,
-                ),
+                child: Icon(icon, color: color),
               ),
 
               const SizedBox(width: 15),
@@ -167,7 +142,6 @@ class ManageUsersPage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
 
                   children: [
-
                     Text(
                       name,
 
@@ -182,10 +156,7 @@ class ManageUsersPage extends StatelessWidget {
                     Text(
                       email,
 
-                      style: const TextStyle(
-                        color: Colors.grey,
-                        fontSize: 13,
-                      ),
+                      style: const TextStyle(color: Colors.grey, fontSize: 13),
                     ),
                   ],
                 ),
@@ -193,8 +164,8 @@ class ManageUsersPage extends StatelessWidget {
 
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 7,
+                  horizontal: 18,
+                  vertical: 10,
                 ),
 
                 decoration: BoxDecoration(
@@ -206,10 +177,7 @@ class ManageUsersPage extends StatelessWidget {
                 child: Text(
                   role,
 
-                  style: TextStyle(
-                    color: color,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(color: color, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -220,16 +188,13 @@ class ManageUsersPage extends StatelessWidget {
           // BUTTONS
           Row(
             children: [
-
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
-
                     showDialog(
                       context: context,
 
                       builder: (context) {
-
                         return AlertDialog(
                           title: const Text("User Details"),
 
@@ -238,7 +203,6 @@ class ManageUsersPage extends StatelessWidget {
                           ),
 
                           actions: [
-
                             TextButton(
                               onPressed: () {
                                 Navigator.pop(context);
@@ -263,9 +227,7 @@ class ManageUsersPage extends StatelessWidget {
                   child: const Text(
                     "View",
 
-                    style: TextStyle(
-                      color: Colors.white,
-                    ),
+                    style: TextStyle(color: Colors.white),
                   ),
                 ),
               ),
@@ -275,13 +237,8 @@ class ManageUsersPage extends StatelessWidget {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
-
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          "$name removed successfully",
-                        ),
-                      ),
+                      SnackBar(content: Text("$name removed successfully")),
                     );
                   },
 
@@ -296,9 +253,7 @@ class ManageUsersPage extends StatelessWidget {
                   child: const Text(
                     "Remove",
 
-                    style: TextStyle(
-                      color: Colors.white,
-                    ),
+                    style: TextStyle(color: Colors.white),
                   ),
                 ),
               ),
@@ -308,4 +263,118 @@ class ManageUsersPage extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget adminNavbar(BuildContext context) {
+  return Container(
+    margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+
+    decoration: BoxDecoration(
+      color: Colors.white,
+
+      borderRadius: BorderRadius.circular(40),
+
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black12,
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    ),
+
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+
+      children: [
+        // DASHBOARD
+        navButton(
+          context,
+          Icons.dashboard,
+          "Dashboard",
+          const AdminDashboardPage(),
+          false,
+        ),
+
+        // USERS
+        navButton(
+          context,
+          Icons.people,
+          "Users",
+          const ManageUsersPage(),
+          true,
+        ),
+
+        // REPORTS
+        navButton(
+          context,
+          Icons.report,
+          "Reports",
+          const ManageReportsPage(),
+          false,
+        ),
+
+        // SETTINGS
+        navButton(
+          context,
+          Icons.settings,
+          "Settings",
+          const SettingsPage(),
+          false,
+        ),
+      ],
+    ),
+  );
+}
+
+Widget navButton(
+  BuildContext context,
+  IconData icon,
+  String label,
+  Widget page,
+  bool isSelected,
+) {
+  return GestureDetector(
+    onTap: () {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => page),
+      );
+    },
+
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+
+      margin: const EdgeInsets.symmetric(vertical: 10),
+
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+
+      decoration: BoxDecoration(
+        color: isSelected ? Colors.green : Colors.transparent,
+
+        borderRadius: BorderRadius.circular(30),
+      ),
+
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+
+        children: [
+          Icon(icon, size: 24, color: isSelected ? Colors.white : Colors.grey),
+
+          const SizedBox(height: 4),
+
+          Text(
+            label,
+
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+
+              color: isSelected ? Colors.white : Colors.grey,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }

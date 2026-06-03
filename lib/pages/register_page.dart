@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -94,7 +95,13 @@ class _RegisterPageState extends State<RegisterPage> {
                   }
 
                   try {
-                    // SAVE TO FIREBASE
+                    // CREATE AUTH ACC
+                    await FirebaseAuth.instance.createUserWithEmailAndPassword(
+                      email: email,
+                      password: password,
+                    );
+
+                    // SAVE DATA TO FIREBASE
                     await FirebaseFirestore.instance
                         .collection("usersData")
                         .add({

@@ -27,11 +27,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   }
 
   Future<void> loadDashboardData() async {
-
     // TOTAL USERS
-    var users = await FirebaseFirestore.instance
-        .collection('usersData')
-        .get();
+    var users = await FirebaseFirestore.instance.collection('usersData').get();
 
     // TOTAL REPORTS
     var reports = await FirebaseFirestore.instance
@@ -50,7 +47,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       backgroundColor: const Color(0xFFF3F7F1),
 
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFF3F7F1),
         elevation: 0,
 
         title: const Text(
@@ -63,7 +60,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       ),
 
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
 
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -209,12 +206,12 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
       // ADMIN NAVBAR
       bottomNavigationBar: Container(
-        margin: const EdgeInsets.all(18),
+        margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
 
         decoration: BoxDecoration(
           color: Colors.white,
 
-          borderRadius: BorderRadius.circular(35),
+          borderRadius: BorderRadius.circular(40),
 
           boxShadow: [
             BoxShadow(
@@ -409,10 +406,10 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
         margin: const EdgeInsets.symmetric(vertical: 10),
 
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
 
         decoration: BoxDecoration(
-          color: isSelected ? Colors.green.shade700 : Colors.transparent,
+          color: isSelected ? Colors.green : Colors.transparent,
 
           borderRadius: BorderRadius.circular(30),
         ),
@@ -421,7 +418,11 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           mainAxisSize: MainAxisSize.min,
 
           children: [
-            Icon(icon, color: isSelected ? Colors.white : Colors.grey),
+            Icon(
+              icon,
+              size: 24,
+              color: isSelected ? Colors.white : Colors.grey,
+            ),
 
             const SizedBox(height: 4),
 
@@ -430,10 +431,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
               style: TextStyle(
                 fontSize: 12,
+                fontWeight: FontWeight.w500,
 
                 color: isSelected ? Colors.white : Colors.grey,
-
-                fontWeight: FontWeight.w500,
               ),
             ),
           ],

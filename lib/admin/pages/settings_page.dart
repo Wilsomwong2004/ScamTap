@@ -3,8 +3,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../pages/login_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
+
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  String adminUsername = "Admin";
 
   @override
   Widget build(BuildContext context) {
@@ -12,7 +19,7 @@ class SettingsPage extends StatelessWidget {
       backgroundColor: const Color(0xFFF3F7F1),
 
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFF3F7F1),
         elevation: 0,
 
         title: const Text(
@@ -45,10 +52,10 @@ class SettingsPage extends StatelessWidget {
 
             const SizedBox(height: 18),
 
-            const Text(
-              "Admin",
+            Text(
+              adminUsername,
 
-              style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 5),
@@ -236,10 +243,11 @@ class SettingsPage extends StatelessWidget {
                         await FirebaseFirestore.instance
                             .collection('usersData')
                             .doc('GXVenKdMfrr13qJg1SzB')
-                            .update({
-                              'Username': usernameController.text,
-                            });
+                            .update({'Username': usernameController.text});
 
+                        setState(() {
+                          adminUsername = usernameController.text.trim();
+                        });
                         Navigator.pop(context);
 
                         ScaffoldMessenger.of(context).showSnackBar(
