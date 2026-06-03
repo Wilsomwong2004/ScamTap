@@ -37,9 +37,11 @@ class _LookupPageState extends State<LookupPage> {
         _resultData = jsonDecode(saved);
         _showResult = true;
       });
-
-      _isInitialized = true;
     }
+
+    setState(() {
+      _isInitialized = true;
+    });
   }
 
   Future<void> _saveResult(Map<String, dynamic> data) async {
@@ -172,70 +174,33 @@ class _LookupPageState extends State<LookupPage> {
                 child: FilterSelection(),
               ),
 
-              // Row(
-              //   children: [
-              //     Padding(
-              //       padding: EdgeInsets.fromLTRB(20, 5, 15, 5),
-              //       child: SizedBox(
-              //         width: 110,
-              //         height: 40,
-              //         child: ElevatedButton.icon(
-              //           onPressed: () {
-              //             print("clicked!");
-              //           },
-              //           style: ElevatedButton.styleFrom(
-              //             backgroundColor: Colors.white
-              //           ),
-              //           icon: Icon(Icons.call_sharp),
-              //           label: Text("Call"),
-              //         ),
-              //       ),
-              //     ),
-
-              //     // SizedBox(width: 15),
-
-              //     Padding(
-              //       padding: EdgeInsets.fromLTRB(0, 5, 5, 5),
-              //       child: SizedBox(
-              //         width: 110,
-              //         height: 40,
-              //         child: ElevatedButton.icon(
-              //           onPressed: () {
-              //             print("clicked!");
-              //           },
-              //           style: ElevatedButton.styleFrom(
-              //             backgroundColor: Colors.white
-              //           ),
-              //           icon: Icon(Icons.link),
-              //           label: Text("Link"),
-              //         ),
-              //       ),
-              //     ),
-              //   ],
-              // ),
               SizedBox(height: 10),
 
               StreamBuilder<List<SearchRecordModel>>(
                 stream: FirestoreService().getSearchHistory(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return CircularProgressIndicator();
+                    return const Padding(
+                      padding: EdgeInsets.only(top: 20),
+                      child: CircularProgressIndicator(color: Colors.white),
+                    );
                   }
 
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 28,
-                        vertical: _showResult ? 100 : 160,
-                      ),
-                      child: Column (
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 28, vertical: 50),
+                      child: Column(
                         children: [
-                          Icon(Icons.warning_rounded, color: Colors.red, size: 30,),
+                          Icon(Icons.warning_rounded, color: Colors.red, size: 30),
                           SizedBox(height: 5),
                           Text(
                             "No record found!",
-                            style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
-                          )
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         ],
                       ),
                     );
@@ -245,14 +210,13 @@ class _LookupPageState extends State<LookupPage> {
 
                   return ListView.builder(
                     shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(),
+                    physics: const NeverScrollableScrollPhysics(),
                     itemCount: records.length,
                     itemBuilder: (context, index) {
                       final record = records[index];
                       return Padding(
-                        padding: EdgeInsets.fromLTRB(20, 5, 20, 5),
+                        padding: const EdgeInsets.fromLTRB(20, 5, 20, 5),
                         child: SizedBox(
-                          width: double.infinity,
                           height: 90,
                           child: ElevatedButton(
                             onPressed: () {
@@ -260,19 +224,14 @@ class _LookupPageState extends State<LookupPage> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => ScamreportPage(
-                                    result    : record.rawData ?? {},
-                                    inputText : record.value,
+                                    result: record.rawData ?? {},
+                                    inputText: record.value,
                                   ),
                                 ),
                               );
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color.fromARGB(
-                                255,
-                                233,
-                                247,
-                                235,
-                              ),
+                              backgroundColor: const Color.fromARGB(255, 233, 247, 235),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(25),
                               ),
@@ -281,80 +240,43 @@ class _LookupPageState extends State<LookupPage> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
                                   children: [
                                     CircleAvatar(
-                                      backgroundColor: const Color.fromARGB(
-                                        255,
-                                        44,
-                                        106,
-                                        46,
-                                      ),
-                                      child: Icon(
-                                        Icons.person,
-                                        color: Colors.white,
-                                      ),
+                                      backgroundColor: const Color.fromARGB(255, 44, 106, 46),
+                                      child: const Icon(Icons.person, color: Colors.white),
                                     ),
-
-                                    SizedBox(width: 12),
-
-                                    Text(
-                                      record.value,
-                                      style: TextStyle(fontSize: 14),
-                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(record.value, style: const TextStyle(fontSize: 14)),
                                   ],
                                 ),
-
-                                Container(
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 80,
-                                        height: 30,
-                                        alignment: Alignment.center,
-                                        decoration: BoxDecoration(
-                                          color: const Color.fromARGB(
-                                            255,
-                                            78,
-                                            114,
-                                            84,
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 80,
+                                      height: 30,
+                                      alignment: Alignment.center,
+                                      decoration: BoxDecoration(
+                                        color: const Color.fromARGB(255, 78, 114, 84),
+                                        borderRadius: BorderRadius.circular(30),
+                                        boxShadow: const [
+                                          BoxShadow(
+                                            color: Color.fromARGB(255, 41, 92, 42),
+                                            blurRadius: 2,
                                           ),
-                                          borderRadius: BorderRadius.circular(
-                                            30,
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: const Color.fromARGB(
-                                                255,
-                                                41,
-                                                92,
-                                                42,
-                                              ),
-                                              blurRadius: 2,
-                                            ),
-                                          ],
-                                        ),
-
-                                        child: Text(
-                                          record.riskLevel,
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                        ],
+                                      ),
+                                      child: Text(
+                                        record.riskLevel,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
                                         ),
                                       ),
-
-                                      SizedBox(width: 10),
-
-                                      Container(
-                                        child: Icon(
-                                          Icons.arrow_forward_ios_rounded,
-                                          weight: 800,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    const Icon(Icons.arrow_forward_ios_rounded),
+                                  ],
                                 ),
                               ],
                             ),
@@ -365,68 +287,6 @@ class _LookupPageState extends State<LookupPage> {
                   );
                 },
               ),
-
-              // Column(
-              //   children: [
-
-              // Padding(
-              //   padding: EdgeInsets.symmetric(horizontal: 25, vertical: 15),
-              //     child: Container(
-              //       width: double.infinity,
-              //       height: 100,
-              //       decoration: BoxDecoration(
-              //         color: const Color.fromARGB(255, 233, 247, 235),
-              //         borderRadius: BorderRadius.circular(20),
-              //         boxShadow: [
-              //           BoxShadow(
-              //             color: Colors.black26,
-              //             blurRadius: 10,
-              //             offset: Offset(0, 4),
-              //         ),
-              //       ],
-              //     ),
-              //   ),
-              // ),
-
-              // Padding(
-              //   padding: EdgeInsets.symmetric(horizontal: 25),
-              //     child: Container(
-              //       width: double.infinity,
-              //       height: 120,
-              //       decoration: BoxDecoration(
-              //         color: Colors.grey[400],
-              //         borderRadius: BorderRadius.circular(20),
-              //         boxShadow: [
-              //           BoxShadow(
-              //             color: Colors.black26,
-              //             blurRadius: 10,
-              //             offset: Offset(0, 4),
-              //         ),
-              //       ],
-              //     ),
-              //   ),
-              // ),
-
-              // Padding(
-              //   padding: EdgeInsets.symmetric(horizontal: 25),
-              //     child: Container(
-              //       width: double.infinity,
-              //       height: 120,
-              //       decoration: BoxDecoration(
-              //         color: Colors.grey[400],
-              //         borderRadius: BorderRadius.circular(20),
-              //         boxShadow: [
-              //           BoxShadow(
-              //             color: Colors.black26,
-              //             blurRadius: 10,
-              //             offset: Offset(0, 4),
-              //         ),
-              //       ],
-              //     ),
-              //   ),
-              // ),
-              //   ],
-              // ),
             ],
           ),
         ),

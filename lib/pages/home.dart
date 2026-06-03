@@ -7,7 +7,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final Function(int)? onTabChange;
+  const HomePage({super.key, this.onTabChange});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -196,10 +197,12 @@ class _HomePageState extends State<HomePage> {
                       color: Colors.blue.shade600,
                       onTap: () {
                         // Navigate to MessagePage
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const MessagePage()),
-                        );
+                        widget.onTabChange?.call(2);
+                        
+                        // Navigator.push(
+                        //   context,
+                        //   MaterialPageRoute(builder: (context) => const MessagePage()),
+                        // );
                       },
                     ),
                   ),
@@ -212,10 +215,12 @@ class _HomePageState extends State<HomePage> {
                       color: Colors.green.shade600,
                       onTap: () {
                         // Navigate to LookupPage
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const LookupPage()),
-                        );
+                        widget.onTabChange?.call(1);
+
+                        // Navigator.push(
+                        //   context,
+                        //   MaterialPageRoute(builder: (context) => const LookupPage()),
+                        // );
                       },
                     ),
                   ),

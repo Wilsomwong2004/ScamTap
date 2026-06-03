@@ -11,16 +11,17 @@ class ScamreportPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-      final bool isScam = result?['is_scam'] ?? false;
-      final double riskScore = (result?['risk_score'] as num?)?.toDouble() ?? 0;
-      final String verdict = result?['verdict'] ?? 'UNKNOWN';
-      final String type = result?['type'] ?? 'unknown';
-      final String reason = result?['ai_analysis']?['reason'] ?? 'No reason provided';
-      final String confidence  = result?['ai_analysis']?['confidence'] ?? 'low';
-      final int policeCount = result?['penipumy']?['police_report_count'] ?? 0;
-      final bool isFraud = result?['penipumy']?['fraud'] ?? false;
-      final double spamScore = (result?['huggingface']?['spam_score'] as num?)?.toDouble() ?? 0.0;
-      final int malicious = result?['virustotal']?['malicious']   ?? 0;
+    final Map<String, dynamic> detail =  Map<String, dynamic>.from(result?['detail'] ?? result ?? {});
+    final bool isScam = result?['is_scam'] ?? detail['is_scam'] ?? false;
+    final double riskScore = (result?['risk_score'] as num?)?.toDouble() ?? (result?['riskScore'] as num?)?.toDouble() ?? 0;
+    final String verdict = result?['verdict'] ?? detail['verdict'] ?? 'UNKNOWN';
+    final String type = result?['type'] ?? 'unknown';
+    final String reason = result?['ai_analysis']?['reason'] ?? detail['ai_analysis']?['reason'] ?? 'No reason provided';
+    final String confidence = result?['ai_analysis']?['confidence'] ?? detail['ai_analysis']?['confidence'] ?? 'low';
+    final int policeCount = result?['penipumy']?['police_report_count'] ?? detail['penipumy']?['police_report_count'] ?? 0;
+    final bool isFraud = result?['penipumy']?['fraud'] ?? detail['penipumy']?['fraud'] ?? false;
+    final double spamScore = (result?['huggingface']?['spam_score'] as num?)?.toDouble() ?? (detail['huggingface']?['spam_score'] as num?)?.toDouble() ?? 0.0;
+    final int malicious = result?['virustotal']?['malicious'] ?? detail['virustotal']?['malicious'] ?? 0;
 
     return Scaffold(
       appBar: AppBar(

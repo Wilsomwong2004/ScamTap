@@ -30,8 +30,8 @@ class _NavibarState extends State<Navibar>
 
   int selectionIndex = 0;
 
-  final List<Widget> _pages = [
-    HomePage(),
+  List<Widget> get _pages => [
+    HomePage(onTabChange: (index) => setState(() => selectionIndex = index)),
     LookupPage(),
     MessagePage(),
     MonitorPage(),
