@@ -1,4 +1,3 @@
-import 'package:ScamTap/models/scam_model.dart';
 import 'package:ScamTap/pages/free_users/scamreport_page.dart';
 import 'package:ScamTap/widgets/scoregauge.dart';
 import 'package:flutter/material.dart';

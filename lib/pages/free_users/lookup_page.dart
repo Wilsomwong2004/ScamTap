@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ScamTap/models/search_record_model.dart';
 import 'package:ScamTap/pages/free_users/scamreport_page.dart';
 import 'package:ScamTap/services/firestore_service.dart';
+import 'package:ScamTap/services/cache_service.dart';
 import 'package:flutter/material.dart';
 import 'package:ScamTap/widgets/animatedhinttextfield.dart';
 import 'package:ScamTap/widgets/miniprofile.dart';
@@ -23,6 +24,7 @@ class _LookupPageState extends State<LookupPage> {
   Map<String, dynamic>? _resultData;
   bool _isInitialized = false;
   String _selectedFilter = 'Call';
+  final _cacheService = CacheService();
 
   @override
   void initState() {
@@ -31,11 +33,10 @@ class _LookupPageState extends State<LookupPage> {
   }
 
   Future<void> _loadLastResult() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? saved = prefs.getString('last_result_lookup');
-    if (saved != null) {
+    final resultData = await _cacheService.getResult('last_result_lookup');
+    if (resultData != null) {
       setState(() {
-        _resultData = jsonDecode(saved);
+        _resultData = resultData;
         _showResult = true;
       });
     }
@@ -46,8 +47,7 @@ class _LookupPageState extends State<LookupPage> {
   }
 
   Future<void> _saveResult(Map<String, dynamic> data) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('last_result_lookup', jsonEncode(data));
+    await _cacheService.saveResult('last_result_lookup', data);
   }
 
   @override

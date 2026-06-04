@@ -20,6 +20,8 @@ class SearchRecordModel {
   });
 
   factory SearchRecordModel.fromMap(Map<String, dynamic> map) {
+    // print('Firestore Data: $map');
+
     return SearchRecordModel(
       type      : map['type']      ?? 'unknown',
       value     : map['value']     ?? '',

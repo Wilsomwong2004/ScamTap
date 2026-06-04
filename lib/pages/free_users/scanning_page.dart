@@ -1,4 +1,4 @@
-import 'package:ScamTap/models/scam_model.dart';
+import 'package:ScamTap/services/scam_service.dart';
 import 'package:flutter/material.dart';
 import 'package:ScamTap/pages/free_users/scamreport_page.dart';
 

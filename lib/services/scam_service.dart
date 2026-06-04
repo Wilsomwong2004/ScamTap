@@ -1,11 +1,10 @@
 import 'dart:convert';
 import 'dart:developer';
-import 'package:ScamTap/services/firestore_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_ai/firebase_ai.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
-
+import 'firestore_service.dart';
 
 String _formatPhoneNumber(String value) {
   String cleaned = value.replaceAll(RegExp(r'[\s\-\(\)]'), '');
@@ -27,7 +26,6 @@ bool _isLink(String value) {
       value.startsWith('https://') ||
       value.startsWith('www.');
 }
-
 
 Future<Map<String, dynamic>> fetchData(String value) async {
   String numverifyAPI = dotenv.env['NUMVERIFY_API_KEY'] ?? '';

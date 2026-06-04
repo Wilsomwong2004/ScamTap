@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../services/admin_service.dart';
 
 import 'manage_users_page.dart';
 import 'manage_reports_page.dart';
@@ -19,6 +20,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
   int totalUsers = 0;
   int totalReports = 0;
+  final _adminService = AdminService();
 
   @override
   void initState() {
@@ -27,17 +29,11 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   }
 
   Future<void> loadDashboardData() async {
-    // TOTAL USERS
-    var users = await FirebaseFirestore.instance.collection('usersData').get();
-
-    // TOTAL REPORTS
-    var reports = await FirebaseFirestore.instance
-        .collection('scam_checks')
-        .get();
+    final stats = await _adminService.getDashboardStats();
 
     setState(() {
-      totalUsers = users.docs.length;
-      totalReports = reports.docs.length;
+      totalUsers = stats.totalUsers;
+      totalReports = stats.totalReports;
     });
   }
 

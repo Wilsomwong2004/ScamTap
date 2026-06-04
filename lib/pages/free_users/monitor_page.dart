@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../models/search_record_model.dart';
 import '../../services/firestore_service.dart';
+import '../../services/analytics_service.dart';
 
 class MonitorPage extends StatefulWidget {
   const MonitorPage({super.key});
@@ -13,7 +14,8 @@ class MonitorPage extends StatefulWidget {
 }
 
 class _MonitorPageState extends State<MonitorPage> {
-  String _selectedPeriod = '30 days';
+  String _selectedPeriod = '7 days';
+  final _analyticsService = AnalyticsService();
 
   int _daysFromPeriod() {
     switch (_selectedPeriod) {
@@ -146,7 +148,11 @@ class _MonitorPageState extends State<MonitorPage> {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: chartData.map((data) {
-                            return _buildBar(data['day'], data['scam'], data['safe']);
+                            return _buildBar(
+                              data['day']?.toString() ?? '',
+                              (data['scam'] as num?)?.toInt() ?? 0,
+                              (data['safe'] as num?)?.toInt() ?? 0,
+                            );
                           }).toList(),
                         ),
                       ),
@@ -252,24 +258,7 @@ class _MonitorPageState extends State<MonitorPage> {
   }
 
   List<Map<String, dynamic>> _buildChartData(List<SearchRecordModel> records) {
-    final now = DateTime.now();
-    return List.generate(7, (i) {
-      final day = now.subtract(Duration(days: 6 - i));
-      final dayRecords = records.where((r) =>
-        r.timestamp.year == day.year &&
-        r.timestamp.month == day.month &&
-        r.timestamp.day == day.day
-      ).toList();
-
-      final scam = dayRecords.where((r) => r.detail['is_scam'] == true || r.detail['verdict'] == 'SCAM').length;
-      final safe = dayRecords.length - scam;
-
-      return {
-        'day': _dayLabel(day.weekday),
-        'scam': scam,
-        'safe': safe,
-      };
-    });
+    return _analyticsService.buildChartData(records, _selectedPeriod);
   }
 
   String _dayLabel(int weekday) {

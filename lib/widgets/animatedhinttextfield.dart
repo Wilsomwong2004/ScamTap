@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:ScamTap/models/scam_model.dart';
+import 'package:ScamTap/services/scam_service.dart';
 import 'package:ScamTap/pages/free_users/scanning_page.dart';
 import 'package:flutter/material.dart';
 

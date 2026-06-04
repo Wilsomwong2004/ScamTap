@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:ScamTap/models/news_model.dart';
+import 'package:ScamTap/services/news_service.dart';
 
 class NewsSection extends StatefulWidget {
   const NewsSection({super.key});
@@ -20,7 +21,7 @@ class _NewsSectionState extends State<NewsSection> {
   }
 
   Future<void> _load() async {
-    final results = await NewsModel.fetchNews();
+    final results = await NewsService.fetchNews();
     if (mounted) {
       setState(() {
         _news = results;

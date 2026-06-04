@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../services/auth_service.dart';
+import '../../services/validation_service.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -73,15 +75,29 @@ class _RegisterPageState extends State<RegisterPage> {
                   String confirmPassword = confirmPasswordController.text
                       .trim();
 
-                  // EMPTY CHECK
-                  if (username.isEmpty ||
-                      email.isEmpty ||
-                      password.isEmpty ||
-                      confirmPassword.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Please fill all fields")),
-                    );
+                  // VALIDATION
+                  String? usernameError = ValidationService.validateUsername(username);
+                  String? emailError = ValidationService.validateEmail(email);
+                  String? passwordError = ValidationService.validatePassword(password);
 
+                  if (usernameError != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(usernameError)),
+                    );
+                    return;
+                  }
+
+                  if (emailError != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(emailError)),
+                    );
+                    return;
+                  }
+
+                  if (passwordError != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(passwordError)),
+                    );
                     return;
                   }
 
@@ -95,32 +111,24 @@ class _RegisterPageState extends State<RegisterPage> {
                   }
 
                   try {
-                    // CREATE AUTH ACC
-                    final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+                    final authService = AuthService();
+                    final result = await authService.registerUser(
+                      username: username,
                       email: email,
                       password: password,
                     );
 
-                    // SAVE DATA TO FIREBASE
-                    final uid = userCredential.user!.uid;
-                    await FirebaseFirestore.instance
-                        .collection("usersData")
-                        .doc(uid)
-                        .set({
-                          "Username": username,
-                          "Email": email,
-                          "Password": password,
-                          "Role": "user",
-                          "RegisterDate": DateTime.now(),
+                    if (result.success) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Register Successful")),
+                      );
 
-                          "Profile Photo": "",
-                        });
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Register Successful")),
-                    );
-
-                    Navigator.pop(context);
+                      Navigator.pop(context);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(result.message)),
+                      );
+                    }
                   } catch (e) {
                     print(e);
 
