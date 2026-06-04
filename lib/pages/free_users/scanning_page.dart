@@ -1,6 +1,6 @@
 import 'package:ScamTap/models/scam_model.dart';
 import 'package:flutter/material.dart';
-import 'package:ScamTap/pages/scamreport_page.dart';
+import 'package:ScamTap/pages/free_users/scamreport_page.dart';
 
 class ScanningPage extends StatefulWidget {
   final String inputText;

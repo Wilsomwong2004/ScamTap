@@ -2,13 +2,13 @@ import 'dart:convert';
 import 'package:ScamTap/widgets/scamdetectedcolorcontainer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ScamTap/models/search_record_model.dart';
-import 'package:ScamTap/pages/scamreport_page.dart';
+import 'package:ScamTap/pages/free_users/scamreport_page.dart';
 import 'package:ScamTap/services/firestore_service.dart';
 import 'package:flutter/material.dart';
 import 'package:ScamTap/widgets/animatedhinttextfield.dart';
 import 'package:ScamTap/widgets/miniprofile.dart';
 import 'package:ScamTap/widgets/scoregauge.dart';
-import 'package:ScamTap/pages/scanning_page.dart';
+import 'package:ScamTap/pages/free_users/scanning_page.dart';
 
 class MessagePage extends StatefulWidget {
   const MessagePage({super.key});

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'register_page.dart';
-import '../widgets/navibar.dart';
-import '../admin/pages/admin_dashboard_page.dart';
+import '../../widgets/navibar.dart';
+import '../admin/admin_dashboard_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';

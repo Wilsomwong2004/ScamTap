@@ -2,8 +2,8 @@ import 'package:ScamTap/widgets/miniprofile.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../models/search_record_model.dart';
-import '../services/firestore_service.dart';
+import '../../models/search_record_model.dart';
+import '../../services/firestore_service.dart';
 
 class MonitorPage extends StatefulWidget {
   const MonitorPage({super.key});

@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:ScamTap/widgets/miniprofile.dart';
 import 'package:ScamTap/models/users_model.dart';
-import 'package:ScamTap/pages/scamreport_page.dart';
+import 'package:ScamTap/pages/free_users/scamreport_page.dart';
 import 'package:ScamTap/services/firestore_service.dart';
 import 'package:ScamTap/models/search_record_model.dart';
-import 'package:ScamTap/pages/premium_purchase_page.dart';
-import 'package:ScamTap/pages/all_scam_alert_page.dart';
+import 'package:ScamTap/pages/free_users/premium_purchase_page.dart';
+import 'package:ScamTap/pages/free_users/all_scam_alert_page.dart';
 import 'package:ScamTap/widgets/news_section.dart';
 
 class HomePage extends StatefulWidget {

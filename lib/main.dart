@@ -1,8 +1,8 @@
-import 'package:ScamTap/pages/home.dart';
+import 'package:ScamTap/pages/free_users/home.dart';
 import 'package:ScamTap/widgets/navibar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:ScamTap/pages/login_page.dart';
+import 'package:ScamTap/pages/free_users/login_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_ai/firebase_ai.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';

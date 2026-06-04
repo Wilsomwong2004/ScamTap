@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ScamTap/models/search_record_model.dart';
-import 'package:ScamTap/pages/scamreport_page.dart';
+import 'package:ScamTap/pages/free_users/scamreport_page.dart';
 
 class AllScamAlertsPage extends StatelessWidget {
   final List<SearchRecordModel> records;
