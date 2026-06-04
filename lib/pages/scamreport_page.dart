@@ -30,6 +30,7 @@ class _ScamreportPageState extends State<ScamreportPage> {
     final bool isFraud = widget.result?['penipumy']?['fraud'] ?? detail['penipumy']?['fraud'] ?? false;
     final double spamScore = (widget.result?['huggingface']?['spam_score'] as num?)?.toDouble() ?? (detail['huggingface']?['spam_score'] as num?)?.toDouble() ?? 0.0;
     final int malicious = widget.result?['virustotal']?['malicious'] ?? detail['virustotal']?['malicious'] ?? 0;
+    final Map<String, dynamic> numverify = widget.result?['numverify'] ?? detail['numverify'] ?? {};
 
     return Scaffold(
       appBar: AppBar(
@@ -128,37 +129,70 @@ class _ScamreportPageState extends State<ScamreportPage> {
 
                   const SizedBox(height: 25),
 
-                  // if (type == 'phone' && widget.result?['numverify'] != null) ...[
-                  //   Container(
-                  //     width: double.infinity,
-                  //     padding: const EdgeInsets.all(16),
-                  //     decoration: BoxDecoration(
-                  //       color: Colors.blue.shade50,
-                  //       borderRadius: BorderRadius.circular(16),
-                  //       border: Border.all(color: Colors.blue.shade100),
-                  //     ),
-                  //     child: Column(
-                  //       crossAxisAlignment: CrossAxisAlignment.start,
-                  //       children: [
-                  //         Row(
-                  //           children: [
-                  //             Icon(Icons.sim_card_rounded, size: 16, color: Colors.blue.shade700),
-                  //             const SizedBox(width: 6),
-                  //             Text("Phone Details",
-                  //               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.blue.shade700)),
-                  //           ],
-                  //         ),
-                  //         const SizedBox(height: 12),
-                  //         _PhoneDetailRow(label: 'Number',   value: widget.result?['numverify']?['international_format'] ?? widget.inputText),
-                  //         _PhoneDetailRow(label: 'Country',  value: widget.result?['numverify']?['country_name']         ?? '-'),
-                  //         _PhoneDetailRow(label: 'Carrier',  value: widget.result?['numverify']?['carrier']              ?? '-'),
-                  //         _PhoneDetailRow(label: 'Line Type',value: widget.result?['numverify']?['line_type']            ?? '-'),
-                  //         _PhoneDetailRow(label: 'Valid',    value: widget.result?['numverify']?['valid'] == true ? '✓ Yes' : '✗ No'),
-                  //       ],
-                  //     ),
-                  //   ),
-                  //   const SizedBox(height: 16),
-                  // ],
+                  if (type == 'phone' && numverify.isNotEmpty) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.blue.shade100),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.sim_card_rounded, size: 16, color: Colors.blue.shade700),
+                              const SizedBox(width: 6),
+                              Text("Phone Details",
+                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.blue.shade700)),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          _PhoneDetailRow(label: 'Number',   value: numverify['international_format'] ?? widget.inputText),
+                          _PhoneDetailRow(label: 'Country',  value: numverify['country_name']         ?? '-'),
+                          _PhoneDetailRow(label: 'Carrier',  value: numverify['carrier']              ?? '-'),
+                          _PhoneDetailRow(label: 'Line Type',value: numverify['line_type']            ?? '-'),
+                          _PhoneDetailRow(label: 'Valid',    value: numverify['valid'] == true ? '✓ Yes' : '✗ No'),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  if (type == 'message') ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color.fromARGB(255, 223, 223, 223),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.message_rounded, size: 14, color: Colors.grey.shade600),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Message Content',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.grey.shade600),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            widget.inputText,
+                            style: const TextStyle(fontSize: 13, color: Color(0xFF1A1A1A), height: 1.5),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
 
                   Container(
                     width: double.infinity,
@@ -271,6 +305,7 @@ class _ScamreportPageState extends State<ScamreportPage> {
                           showDialog(
                             context: context,
                             builder: (BuildContext dialogContext) {
+
                               return Dialog(
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                 child: Padding(

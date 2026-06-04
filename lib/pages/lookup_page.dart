@@ -180,7 +180,7 @@ class _LookupPageState extends State<LookupPage> {
                 ),
               ),
 
-              SizedBox(height: 20),
+              SizedBox(height: 10),
 
               StreamBuilder<List<SearchRecordModel>>(
                 stream: FirestoreService().getSearchHistory(),
