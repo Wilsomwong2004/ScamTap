@@ -209,17 +209,21 @@ Widget build(BuildContext context) {
               StreamBuilder<List<SearchRecordModel>>(
                 stream: FirestoreService().getSearchHistory(),
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Padding(
-                      padding: EdgeInsets.only(top: 20),
-                      child: CircularProgressIndicator(color: Colors.white),
+                  final allRecords = snapshot.data ?? [];
+                  final records = allRecords.where((r) => r.type == 'message').toList();
+
+                  if (snapshot.connectionState == ConnectionState.waiting && allRecords.isEmpty) {
+                    return const SizedBox(
+                      height: 60,
+                      child: Center(child: CircularProgressIndicator(color: Colors.white)),
                     );
                   }
 
-                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  if (allRecords.isEmpty) {
                     return const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 28, vertical: 20),
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.warning_rounded, color: Colors.red, size: 30),
                           SizedBox(height: 5),
@@ -232,17 +236,11 @@ Widget build(BuildContext context) {
                     );
                   }
 
-                  final allRecords = snapshot.data!;
-                  print('All records: ${allRecords.map((r) => '${r.type}: ${r.value}').toList()}');
-
-                  final records = snapshot.data!
-                      .where((r) => r.type == 'message')
-                      .toList();
-
                   if (records.isEmpty) {
                     return const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 28, vertical: 20),
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.search_off_rounded, color: Colors.white70, size: 30),
                           SizedBox(height: 5),
@@ -255,18 +253,16 @@ Widget build(BuildContext context) {
                     );
                   }
 
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: records.length,
-                    itemBuilder: (context, index) {
-                      final record = records[index];
+                  return Column(
+                    children: records.map((record) {
                       return Padding(
                         padding: const EdgeInsets.fromLTRB(20, 5, 20, 5),
-                        child: SizedBox(
-                          height: 90,
-                          child: ElevatedButton(
-                            onPressed: () {
+                        child: Material(
+                          color: const Color.fromARGB(255, 233, 247, 235),
+                          borderRadius: BorderRadius.circular(25),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(25),
+                            onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -277,59 +273,58 @@ Widget build(BuildContext context) {
                                 ),
                               );
                             },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color.fromARGB(255, 233, 247, 235),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    const CircleAvatar(
-                                      backgroundColor: Color.fromARGB(255, 44, 51, 106),
-                                      child: Icon(Icons.message, color: Colors.white),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    SizedBox(
-                                      width: 160,
-                                      child: Text(
-                                        record.value,
-                                        style: const TextStyle(fontSize: 14),
-                                        overflow: TextOverflow.ellipsis,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const CircleAvatar(
+                                        backgroundColor: Color.fromARGB(255, 44, 51, 106),
+                                        child: Icon(Icons.message, color: Colors.white),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 80,
-                                      height: 30,
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        color: record.riskLevel == 'Dangerous'
-                                            ? Colors.red.shade700
-                                            : record.riskLevel == 'Warning'
-                                                ? Colors.orange.shade700
-                                                : const Color.fromARGB(255, 78, 114, 84),
-                                        borderRadius: BorderRadius.circular(30),
+                                      const SizedBox(width: 12),
+                                      SizedBox(
+                                        width: 160,
+                                        child: Text(
+                                          record.value,
+                                          style: const TextStyle(fontSize: 14),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
-                                      child: Text(
-                                        record.riskLevel,
-                                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                    ],
+                                  ),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: 80,
+                                        height: 30,
+                                        alignment: Alignment.center,
+                                        decoration: BoxDecoration(
+                                          color: record.riskLevel == 'Dangerous'
+                                              ? Colors.red.shade700
+                                              : record.riskLevel == 'Warning'
+                                                  ? Colors.orange.shade700
+                                                  : const Color.fromARGB(255, 78, 114, 84),
+                                          borderRadius: BorderRadius.circular(30),
+                                        ),
+                                        child: Text(
+                                          record.riskLevel,
+                                          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    const Icon(Icons.arrow_forward_ios_rounded),
-                                  ],
-                                ),
-                              ],
+                                      const SizedBox(width: 10),
+                                      const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
                       );
-                    },
+                    }).toList(),
                   );
                 },
               ),

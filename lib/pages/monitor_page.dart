@@ -28,6 +28,7 @@ class _MonitorPageState extends State<MonitorPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -89,7 +90,7 @@ class _MonitorPageState extends State<MonitorPage> {
           final chartData = _buildChartData(records);
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20,20,20,120),
+            padding: const EdgeInsets.fromLTRB(20,120,20,120),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

@@ -180,40 +180,24 @@ class _LookupPageState extends State<LookupPage> {
                 ),
               ),
 
-              SizedBox(height: 10),
+              SizedBox(height: 20),
 
               StreamBuilder<List<SearchRecordModel>>(
                 stream: FirestoreService().getSearchHistory(),
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Padding(
-                      padding: EdgeInsets.only(top: 20),
-                      child: CircularProgressIndicator(color: Colors.white),
-                    );
-                  }
-
-                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 28, vertical: 20),
-                      child: Column(
-                        children: [
-                          Icon(Icons.warning_rounded, color: Colors.red, size: 30),
-                          SizedBox(height: 5),
-                          Text(
-                            "No record found!",
-                            style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  final allRecords = snapshot.data!;
+                  final allRecords = snapshot.data ?? [];
                   final records = allRecords.where((r) {
                     if (_selectedFilter == 'Call') return r.type == 'phone';
                     if (_selectedFilter == 'Link') return r.type == 'link';
                     return true;
                   }).toList();
+
+                  if (snapshot.connectionState == ConnectionState.waiting && allRecords.isEmpty) {
+                    return const SizedBox(
+                      height: 60,
+                      child: Center(child: CircularProgressIndicator(color: Colors.white)),
+                    );
+                  }
 
                   if (records.isEmpty) {
                     return Padding(
@@ -224,7 +208,9 @@ class _LookupPageState extends State<LookupPage> {
                           const Icon(Icons.search_off_rounded, color: Colors.white70, size: 30),
                           const SizedBox(height: 5),
                           Text(
-                            "No ${_selectedFilter == 'Call' ? 'phone' : 'link'} records found!",
+                            allRecords.isEmpty
+                                ? "No record found!"
+                                : "No ${_selectedFilter == 'Call' ? 'phone' : 'link'} records found!",
                             style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
                           ),
                         ],
@@ -232,18 +218,16 @@ class _LookupPageState extends State<LookupPage> {
                     );
                   }
 
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: records.length,
-                    itemBuilder: (context, index) {
-                      final record = records[index];
+                  return Column(
+                    children: records.map((record) {
                       return Padding(
                         padding: const EdgeInsets.fromLTRB(20, 5, 20, 5),
-                        child: SizedBox(
-                          height: 90,
-                          child: ElevatedButton(
-                            onPressed: () {
+                        child: Material(
+                          color: const Color.fromARGB(255, 233, 247, 235),
+                          borderRadius: BorderRadius.circular(25),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(25),
+                            onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -254,58 +238,170 @@ class _LookupPageState extends State<LookupPage> {
                                 ),
                               );
                             },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color.fromARGB(255, 233, 247, 235),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    CircleAvatar(
-                                      backgroundColor: const Color.fromARGB(255, 44, 106, 46),
-                                      child: Icon(
-                                        _selectedFilter == 'Call' ? Icons.phone : Icons.link,
-                                        color: Colors.white,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      CircleAvatar(
+                                        backgroundColor: const Color.fromARGB(255, 44, 106, 46),
+                                        child: Icon(
+                                          record.type == 'phone' ? Icons.phone : Icons.link,
+                                          color: Colors.white,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Text(record.value, style: const TextStyle(fontSize: 14)),
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 80,
-                                      height: 30,
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        color: record.riskLevel == 'Dangerous'
-                                            ? Colors.red.shade700
-                                            : record.riskLevel == 'Warning'
-                                                ? Colors.orange.shade700
-                                                : const Color.fromARGB(255, 78, 114, 84),
-                                        borderRadius: BorderRadius.circular(30),
+                                      const SizedBox(width: 12),
+                                      Text(record.value, style: const TextStyle(fontSize: 14)),
+                                    ],
+                                  ),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: 80,
+                                        height: 30,
+                                        alignment: Alignment.center,
+                                        decoration: BoxDecoration(
+                                          color: record.riskLevel == 'Dangerous'
+                                              ? Colors.red.shade700
+                                              : record.riskLevel == 'Warning'
+                                                  ? Colors.orange.shade700
+                                                  : const Color.fromARGB(255, 78, 114, 84),
+                                          borderRadius: BorderRadius.circular(30),
+                                        ),
+                                        child: Text(
+                                          record.riskLevel,
+                                          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                        ),
                                       ),
-                                      child: Text(
-                                        record.riskLevel,
-                                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    const Icon(Icons.arrow_forward_ios_rounded),
-                                  ],
-                                ),
-                              ],
+                                      const SizedBox(width: 10),
+                                      const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
                       );
-                    },
+                    }).toList(),
                   );
                 },
               ),
+
+              // StreamBuilder<List<SearchRecordModel>>(
+              //   stream: FirestoreService().getSearchHistory(),
+              //   builder: (context, snapshot) {
+              //     // USE LAST DATA while loading — no blink
+              //     final allRecords = snapshot.data ?? [];
+
+              //     final records = allRecords.where((r) {
+              //       if (_selectedFilter == 'Call') return r.type == 'phone';
+              //       if (_selectedFilter == 'Link') return r.type == 'link';
+              //       return true;
+              //     }).toList();
+
+              //     if (snapshot.connectionState == ConnectionState.waiting && allRecords.isEmpty) {
+              //       return const SizedBox(
+              //         height: 60,
+              //         child: Center(child: CircularProgressIndicator(color: Colors.white)),
+              //       );
+              //     }
+
+              //     if (records.isEmpty) {
+              //       return Padding(
+              //         padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
+              //         child: Column(
+              //           mainAxisSize: MainAxisSize.min,
+              //           children: [
+              //             const Icon(Icons.search_off_rounded, color: Colors.white70, size: 30),
+              //             const SizedBox(height: 5),
+              //             Text(
+              //               allRecords.isEmpty
+              //                   ? "No record found!"
+              //                   : "No ${_selectedFilter == 'Call' ? 'phone' : 'link'} records found!",
+              //               style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
+              //             ),
+              //           ],
+              //         ),
+              //       );
+              //     }
+
+              //     return ListView.builder(
+              //       shrinkWrap: true,
+              //       physics: const NeverScrollableScrollPhysics(),
+              //       itemCount: records.length,
+              //       itemBuilder: (context, index) {
+              //         final record = records[index];
+              //         return Padding(
+              //           padding: const EdgeInsets.fromLTRB(20, 5, 20, 5),
+              //           child: SizedBox(
+              //             height: 90,
+              //             child: ElevatedButton(
+              //               onPressed: () {
+              //                 Navigator.push(
+              //                   context,
+              //                   MaterialPageRoute(
+              //                     builder: (context) => ScamreportPage(
+              //                       result: record.rawData ?? {},
+              //                       inputText: record.value,
+              //                     ),
+              //                   ),
+              //                 );
+              //               },
+              //               style: ElevatedButton.styleFrom(
+              //                 backgroundColor: const Color.fromARGB(255, 233, 247, 235),
+              //                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+              //               ),
+              //               child: Row(
+              //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              //                 children: [
+              //                   Row(
+              //                     children: [
+              //                       CircleAvatar(
+              //                         backgroundColor: const Color.fromARGB(255, 44, 106, 46),
+              //                         child: Icon(
+              //                           record.type == 'phone' ? Icons.phone : Icons.link,
+              //                           color: Colors.white,
+              //                         ),
+              //                       ),
+              //                       const SizedBox(width: 12),
+              //                       Text(record.value, style: const TextStyle(fontSize: 14)),
+              //                     ],
+              //                   ),
+              //                   Row(
+              //                     children: [
+              //                       Container(
+              //                         width: 80,
+              //                         height: 30,
+              //                         alignment: Alignment.center,
+              //                         decoration: BoxDecoration(
+              //                           color: record.riskLevel == 'Dangerous'
+              //                               ? Colors.red.shade700
+              //                               : record.riskLevel == 'Warning'
+              //                                   ? Colors.orange.shade700
+              //                                   : const Color.fromARGB(255, 78, 114, 84),
+              //                           borderRadius: BorderRadius.circular(30),
+              //                         ),
+              //                         child: Text(
+              //                           record.riskLevel,
+              //                           style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+              //                         ),
+              //                       ),
+              //                       const SizedBox(width: 10),
+              //                       const Icon(Icons.arrow_forward_ios_rounded),
+              //                     ],
+              //                   ),
+              //                 ],
+              //               ),
+              //             ),
+              //           ),
+              //         );
+              //       },
+              //     );
+              //   },
+              // ),
             ],
           ),
         ),
