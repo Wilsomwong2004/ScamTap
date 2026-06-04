@@ -322,7 +322,7 @@ class ManageReportsPage extends StatelessWidget {
 
       // ADMIN NAVBAR
       bottomNavigationBar: Container(
-        margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
 
         decoration: BoxDecoration(
           color: Colors.white,
@@ -398,9 +398,9 @@ Widget navButton(
     child: AnimatedContainer(
       duration: const Duration(milliseconds: 250),
 
-      margin: const EdgeInsets.symmetric(vertical: 10),
+      margin: const EdgeInsets.symmetric(vertical: 6),
 
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
 
       decoration: BoxDecoration(
         color: isSelected ? Colors.green : Colors.transparent,
@@ -412,7 +412,7 @@ Widget navButton(
         mainAxisSize: MainAxisSize.min,
 
         children: [
-          Icon(icon, size: 24, color: isSelected ? Colors.white : Colors.grey),
+          Icon(icon, size: 20, color: isSelected ? Colors.white : Colors.grey),
 
           const SizedBox(height: 4),
 
@@ -420,7 +420,7 @@ Widget navButton(
             label,
 
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.w500,
 
               color: isSelected ? Colors.white : Colors.grey,

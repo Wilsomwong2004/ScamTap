@@ -27,8 +27,8 @@ class ScanHistoryPage extends StatelessWidget {
 
       body: StreamBuilder(
         stream: FirebaseFirestore.instance
-            .collection('scam_checks')
-            .orderBy('checked_at', descending: true)
+            .collection('scam_reports')
+            .orderBy('reportDate', descending: true)
             .snapshots(),
 
         builder: (context, snapshot) {
@@ -49,28 +49,24 @@ class ScanHistoryPage extends StatelessWidget {
             itemBuilder: (context, index) {
               var data = docs[index];
 
-              String type = "";
+              String scamType = data['scamType'] ?? "Unknown";
 
-              if (data.data().toString().contains('type')) {
-                type = data['type'] ?? "Unknown";
-              }
+String description =
+    data['reportDescription'] ?? "No Description";
 
-              String value = "";
+String status =
+    data['reportStatus'] ?? "Pending";
 
-              if (data.data().toString().contains('value')) {
-                value = data['value'];
-              }
-              String verdict = "Unknown";
+int riskScore = 0;
 
-              if (data.data().toString().contains('verdict')) {
-                verdict = data['verdict'] ?? "Unknown";
-              }
-
-              int riskScore = 0;
-
-              if (data.data().toString().contains('ai_analysis')) {
-                riskScore = data['ai_analysis']['risk_score'] ?? 0;
-              }
+if (data.data().toString().contains('riskLevel')) {
+  if (data['riskLevel'] is int) {
+    riskScore = data['riskLevel'];
+  } else {
+    riskScore =
+        int.tryParse(data['riskLevel'].toString()) ?? 0;
+  }
+}
 
               Color riskColor = Colors.green;
 
@@ -80,15 +76,15 @@ class ScanHistoryPage extends StatelessWidget {
                 riskColor = Colors.orange;
               }
 
-              IconData typeIcon = Icons.security;
+              IconData typeIcon = Icons.warning;
 
-              if (type == "phone") {
-                typeIcon = Icons.phone;
-              } else if (type == "link") {
-                typeIcon = Icons.link;
-              } else if (type == "message") {
-                typeIcon = Icons.message;
-              }
+if (scamType.toLowerCase().contains("phishing")) {
+  typeIcon = Icons.sms;
+} else if (scamType.toLowerCase().contains("link")) {
+  typeIcon = Icons.link;
+} else if (scamType.toLowerCase().contains("call")) {
+  typeIcon = Icons.call;
+}
 
               return Container(
                 margin: const EdgeInsets.only(bottom: 18),
@@ -127,7 +123,7 @@ class ScanHistoryPage extends StatelessWidget {
 
                         children: [
                           Text(
-                            value,
+                            scamType,
 
                             style: const TextStyle(
                               fontSize: 16,
@@ -138,14 +134,14 @@ class ScanHistoryPage extends StatelessWidget {
                           const SizedBox(height: 6),
 
                           Text(
-                            "Type: ${type.toUpperCase()}",
+                            description,
                             style: TextStyle(color: Colors.grey.shade700),
                           ),
 
                           const SizedBox(height: 6),
 
                           Text(
-                            "Verdict: $verdict",
+                            "Status: $status",
                             style: TextStyle(
                               color: riskColor,
                               fontWeight: FontWeight.bold,
@@ -190,7 +186,7 @@ class ScanHistoryPage extends StatelessWidget {
 
 Widget adminNavbar(BuildContext context) {
   return Container(
-    margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+    margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
 
     decoration: BoxDecoration(
       color: Colors.white,
@@ -236,16 +232,7 @@ Widget adminNavbar(BuildContext context) {
           const ManageReportsPage(),
           false,
         ),
-
-        // NOTIFICATIONS
-        navButton(
-          context,
-          Icons.notifications,
-          "Alerts",
-          const NotificationsPage(),
-          false,
-        ),
-
+        
         // SETTINGS
         navButton(
           context,
@@ -277,9 +264,9 @@ Widget navButton(
     child: AnimatedContainer(
       duration: const Duration(milliseconds: 250),
 
-      margin: const EdgeInsets.symmetric(vertical: 10),
+      margin: const EdgeInsets.symmetric(vertical: 6),
 
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
 
       decoration: BoxDecoration(
         color: isSelected ? Colors.green : Colors.transparent,
@@ -291,7 +278,7 @@ Widget navButton(
         mainAxisSize: MainAxisSize.min,
 
         children: [
-          Icon(icon, size: 24, color: isSelected ? Colors.white : Colors.grey),
+          Icon(icon, size: 20, color: isSelected ? Colors.white : Colors.grey),
 
           const SizedBox(height: 4),
 
@@ -299,7 +286,7 @@ Widget navButton(
             label,
 
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.w500,
 
               color: isSelected ? Colors.white : Colors.grey,

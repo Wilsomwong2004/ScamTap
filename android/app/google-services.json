@@ -10,10 +10,23 @@
       "client_info": {
         "mobilesdk_app_id": "1:1010679459602:android:ab43ee9e47f8312d728dcb",
         "android_client_info": {
-          "package_name": "com.example.ScamTap"
+          "package_name": "com.example.scam_tap"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "1010679459602-hvbovmnuj6n3dtoo9v4g2gni6t7qprd7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.scam_tap",
+            "certificate_hash": "a45f95b63d9b1aacfddba84e4d356910f3fbf579"
+          }
+        },
+        {
+          "client_id": "1010679459602-dehqbep24qq1rgtenqt0q7pg15slbuk1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAx08uh2rlj4Ed6GzF6MLaY-VqbGkoYK94"
@@ -21,7 +34,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1010679459602-dehqbep24qq1rgtenqt0q7pg15slbuk1.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1010679459602-cl8670234h5e08gdu7eisafqb2nov2ac.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.scamTap"
+              }
+            }
+          ]
         }
       }
     }

@@ -248,7 +248,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
 Widget adminNavbar(BuildContext context) {
   return Container(
-    margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+    margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
 
     decoration: BoxDecoration(
       color: Colors.white,
@@ -283,7 +283,7 @@ Widget adminNavbar(BuildContext context) {
           Icons.people,
           "Users",
           const ManageUsersPage(),
-          true,
+          false,
         ),
 
         // REPORTS
@@ -326,7 +326,7 @@ Widget navButton(
     child: AnimatedContainer(
       duration: const Duration(milliseconds: 250),
 
-      margin: const EdgeInsets.symmetric(vertical: 10),
+      margin: const EdgeInsets.symmetric(vertical: 6),
 
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
 
@@ -340,7 +340,7 @@ Widget navButton(
         mainAxisSize: MainAxisSize.min,
 
         children: [
-          Icon(icon, size: 24, color: isSelected ? Colors.white : Colors.grey),
+          Icon(icon, size: 20, color: isSelected ? Colors.white : Colors.grey),
 
           const SizedBox(height: 4),
 
@@ -348,7 +348,7 @@ Widget navButton(
             label,
 
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.w500,
 
               color: isSelected ? Colors.white : Colors.grey,
