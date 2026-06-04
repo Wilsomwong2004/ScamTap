@@ -231,7 +231,7 @@ class ScamreportPage extends StatelessWidget {
                         onPressed: () {},
                         icon: const Icon(Icons.report_gmailerrorred_outlined,
                             size: 18),
-                        label: const Text("Block / Report"),
+                        label: const Text("Report"),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(

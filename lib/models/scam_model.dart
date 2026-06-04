@@ -303,7 +303,10 @@ Future<void> _saveToFirebase(String value, Map<String, dynamic> result) async {
       };
     } else {
       detail = {
-        'huggingface' : result['huggingface'] ?? {},
+        'huggingface' : {
+          'spam_score' : result['huggingface']?['spam_score'] ?? 0.0,
+          'is_spam'    : result['huggingface']?['is_spam']    ?? false,
+        },
         'ai_analysis' : result['ai_analysis'] ?? {},
         'verdict'     : result['verdict']     ?? 'UNKNOWN',
         'is_scam'     : result['is_scam']     ?? false,

@@ -36,9 +36,10 @@ class _MessagePageState extends State<MessagePage> {
         _resultData = jsonDecode(saved);
         _showResult = true;
       });
-
-      _isInitialized = true;
     }
+    setState(() {
+      _isInitialized = true;
+    });
   }
 
   Future<void> _saveResult(Map<String, dynamic> data) async {
@@ -209,40 +210,60 @@ Widget build(BuildContext context) {
                 stream: FirestoreService().getSearchHistory(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return CircularProgressIndicator();
+                    return const Padding(
+                      padding: EdgeInsets.only(top: 20),
+                      child: CircularProgressIndicator(color: Colors.white),
+                    );
                   }
 
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 28,
-                        vertical: _showResult ? 100 : 160,
-                      ),
-                      child: Column (
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 28, vertical: 20),
+                      child: Column(
                         children: [
-                          Icon(Icons.warning_rounded, color: Colors.red, size: 30,),
+                          Icon(Icons.warning_rounded, color: Colors.red, size: 30),
                           SizedBox(height: 5),
                           Text(
                             "No record found!",
                             style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
-                          )
+                          ),
                         ],
                       ),
                     );
                   }
 
-                  final records = snapshot.data!;
+                  final allRecords = snapshot.data!;
+                  print('All records: ${allRecords.map((r) => '${r.type}: ${r.value}').toList()}');
+
+                  final records = snapshot.data!
+                      .where((r) => r.type == 'message')
+                      .toList();
+
+                  if (records.isEmpty) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 28, vertical: 20),
+                      child: Column(
+                        children: [
+                          Icon(Icons.search_off_rounded, color: Colors.white70, size: 30),
+                          SizedBox(height: 5),
+                          Text(
+                            "No message records found!",
+                            style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
 
                   return ListView.builder(
                     shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(),
+                    physics: const NeverScrollableScrollPhysics(),
                     itemCount: records.length,
                     itemBuilder: (context, index) {
                       final record = records[index];
                       return Padding(
-                        padding: EdgeInsets.fromLTRB(20, 5, 20, 5),
+                        padding: const EdgeInsets.fromLTRB(20, 5, 20, 5),
                         child: SizedBox(
-                          width: double.infinity,
                           height: 90,
                           child: ElevatedButton(
                             onPressed: () {
@@ -250,101 +271,58 @@ Widget build(BuildContext context) {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => ScamreportPage(
-                                    result    : record.rawData ?? {},
-                                    inputText : record.value,
+                                    result: record.rawData ?? {},
+                                    inputText: record.value,
                                   ),
                                 ),
                               );
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color.fromARGB(
-                                255,
-                                233,
-                                247,
-                                235,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(25),
-                              ),
+                              backgroundColor: const Color.fromARGB(255, 233, 247, 235),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
                                   children: [
-                                    CircleAvatar(
-                                      backgroundColor: const Color.fromARGB(
-                                        255,
-                                        44,
-                                        106,
-                                        46,
-                                      ),
-                                      child: Icon(
-                                        Icons.person,
-                                        color: Colors.white,
-                                      ),
+                                    const CircleAvatar(
+                                      backgroundColor: Color.fromARGB(255, 44, 51, 106),
+                                      child: Icon(Icons.message, color: Colors.white),
                                     ),
-
-                                    SizedBox(width: 12),
-
-                                    Text(
-                                      record.value,
-                                      style: TextStyle(fontSize: 14),
+                                    const SizedBox(width: 12),
+                                    SizedBox(
+                                      width: 160,
+                                      child: Text(
+                                        record.value,
+                                        style: const TextStyle(fontSize: 14),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
                                   ],
                                 ),
-
-                                Container(
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 80,
-                                        height: 30,
-                                        alignment: Alignment.center,
-                                        decoration: BoxDecoration(
-                                          color: const Color.fromARGB(
-                                            255,
-                                            78,
-                                            114,
-                                            84,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            30,
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: const Color.fromARGB(
-                                                255,
-                                                41,
-                                                92,
-                                                42,
-                                              ),
-                                              blurRadius: 2,
-                                            ),
-                                          ],
-                                        ),
-
-                                        child: Text(
-                                          record.riskLevel,
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 80,
+                                      height: 30,
+                                      alignment: Alignment.center,
+                                      decoration: BoxDecoration(
+                                        color: record.riskLevel == 'Dangerous'
+                                            ? Colors.red.shade700
+                                            : record.riskLevel == 'Warning'
+                                                ? Colors.orange.shade700
+                                                : const Color.fromARGB(255, 78, 114, 84),
+                                        borderRadius: BorderRadius.circular(30),
                                       ),
-
-                                      SizedBox(width: 10),
-
-                                      Container(
-                                        child: Icon(
-                                          Icons.arrow_forward_ios_rounded,
-                                          weight: 800,
-                                        ),
+                                      child: Text(
+                                        record.riskLevel,
+                                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    const Icon(Icons.arrow_forward_ios_rounded),
+                                  ],
                                 ),
                               ],
                             ),
