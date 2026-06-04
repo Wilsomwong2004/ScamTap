@@ -82,6 +82,7 @@ class _ScanningPageState extends State<ScanningPage> {
             fontSize: 22,
           ),
         ),
+        backgroundColor: Colors.green.shade50,
         centerTitle: false,
         elevation: 0,
       ),

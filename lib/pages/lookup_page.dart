@@ -22,6 +22,7 @@ class _LookupPageState extends State<LookupPage> {
   bool _showResult = false;
   Map<String, dynamic>? _resultData;
   bool _isInitialized = false;
+  String _selectedFilter = 'Call';
 
   @override
   void initState() {
@@ -106,6 +107,8 @@ class _LookupPageState extends State<LookupPage> {
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       "Verify Number / Link",
@@ -171,7 +174,10 @@ class _LookupPageState extends State<LookupPage> {
                   horizontal: 20,
                   vertical: 0,
                 ),
-                child: FilterSelection(),
+                child: FilterSelection(
+                  selected: _selectedFilter,
+                  onChanged: (val) => setState(() => _selectedFilter = val),
+                ),
               ),
 
               SizedBox(height: 10),
@@ -188,25 +194,43 @@ class _LookupPageState extends State<LookupPage> {
 
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 28, vertical: 50),
+                      padding: EdgeInsets.symmetric(horizontal: 28, vertical: 20),
                       child: Column(
                         children: [
                           Icon(Icons.warning_rounded, color: Colors.red, size: 30),
                           SizedBox(height: 5),
                           Text(
                             "No record found!",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                            ),
+                            style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
                           ),
                         ],
                       ),
                     );
                   }
 
-                  final records = snapshot.data!;
+                  final allRecords = snapshot.data!;
+                  final records = allRecords.where((r) {
+                    if (_selectedFilter == 'Call') return r.type == 'phone';
+                    if (_selectedFilter == 'Link') return r.type == 'link';
+                    return true;
+                  }).toList();
+
+                  if (records.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.search_off_rounded, color: Colors.white70, size: 30),
+                          const SizedBox(height: 5),
+                          Text(
+                            "No ${_selectedFilter == 'Call' ? 'phone' : 'link'} records found!",
+                            style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
 
                   return ListView.builder(
                     shrinkWrap: true,
@@ -232,9 +256,7 @@ class _LookupPageState extends State<LookupPage> {
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color.fromARGB(255, 233, 247, 235),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(25),
-                              ),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -243,7 +265,10 @@ class _LookupPageState extends State<LookupPage> {
                                   children: [
                                     CircleAvatar(
                                       backgroundColor: const Color.fromARGB(255, 44, 106, 46),
-                                      child: const Icon(Icons.person, color: Colors.white),
+                                      child: Icon(
+                                        _selectedFilter == 'Call' ? Icons.phone : Icons.link,
+                                        color: Colors.white,
+                                      ),
                                     ),
                                     const SizedBox(width: 12),
                                     Text(record.value, style: const TextStyle(fontSize: 14)),
@@ -256,22 +281,16 @@ class _LookupPageState extends State<LookupPage> {
                                       height: 30,
                                       alignment: Alignment.center,
                                       decoration: BoxDecoration(
-                                        color: const Color.fromARGB(255, 78, 114, 84),
+                                        color: record.riskLevel == 'Dangerous'
+                                            ? Colors.red.shade700
+                                            : record.riskLevel == 'Warning'
+                                                ? Colors.orange.shade700
+                                                : const Color.fromARGB(255, 78, 114, 84),
                                         borderRadius: BorderRadius.circular(30),
-                                        boxShadow: const [
-                                          BoxShadow(
-                                            color: Color.fromARGB(255, 41, 92, 42),
-                                            blurRadius: 2,
-                                          ),
-                                        ],
                                       ),
                                       child: Text(
                                         record.riskLevel,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                                       ),
                                     ),
                                     const SizedBox(width: 10),
@@ -295,15 +314,15 @@ class _LookupPageState extends State<LookupPage> {
   }
 }
 
-class FilterSelection extends StatefulWidget {
-  const FilterSelection({super.key});
+class FilterSelection extends StatelessWidget {
+  final String selected;
+  final Function(String) onChanged;
 
-  @override
-  State<FilterSelection> createState() => _FilterSelectionState();
-}
-
-class _FilterSelectionState extends State<FilterSelection> {
-  String _selected = "Call";
+  const FilterSelection({
+    super.key,
+    required this.selected,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -311,17 +330,15 @@ class _FilterSelectionState extends State<FilterSelection> {
 
     return Row(
       children: ["Call", "Link"].map((label) {
-        final isActive = _selected == label;
+        final isActive = selected == label;
         return Padding(
-          padding: EdgeInsets.only(right: 8),
+          padding: const EdgeInsets.only(right: 8),
           child: GestureDetector(
-            onTap: () => setState(() => _selected = label),
+            onTap: () => onChanged(label),
             child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 25, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 8),
               decoration: BoxDecoration(
-                color: isActive
-                    ? Color.fromARGB(255, 44, 106, 46)
-                    : Colors.white,
+                color: isActive ? const Color.fromARGB(255, 44, 106, 46) : Colors.white,
                 borderRadius: BorderRadius.circular(30),
               ),
               child: Row(
@@ -330,17 +347,13 @@ class _FilterSelectionState extends State<FilterSelection> {
                   Icon(
                     icons[label],
                     size: 16,
-                    color: isActive
-                        ? Colors.white
-                        : Color.fromARGB(255, 44, 106, 46),
+                    color: isActive ? Colors.white : const Color.fromARGB(255, 44, 106, 46),
                   ),
-                  SizedBox(width: 6),
+                  const SizedBox(width: 6),
                   Text(
                     label,
                     style: TextStyle(
-                      color: isActive
-                          ? Colors.white
-                          : Color.fromARGB(255, 44, 106, 46),
+                      color: isActive ? Colors.white : const Color.fromARGB(255, 44, 106, 46),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
