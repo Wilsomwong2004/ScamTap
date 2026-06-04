@@ -1,27 +1,35 @@
 import 'package:ScamTap/widgets/miniprofile.dart';
 import 'package:ScamTap/widgets/scoregauge.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ScamTap/services/report_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter/material.dart';
 
-class ScamreportPage extends StatelessWidget {
+class ScamreportPage extends StatefulWidget {
   const ScamreportPage({super.key, this.result, this.inputText = ''});
 
   final Map<String, dynamic>? result;
   final String inputText;
 
   @override
+  State<ScamreportPage> createState() => _ScamreportPageState();
+}
+
+class _ScamreportPageState extends State<ScamreportPage> {
+  @override
   Widget build(BuildContext context) {
-    final Map<String, dynamic> detail =  Map<String, dynamic>.from(result?['detail'] ?? result ?? {});
-    final bool isScam = result?['is_scam'] ?? detail['is_scam'] ?? false;
-    final double riskScore = (result?['risk_score'] as num?)?.toDouble() ?? (result?['riskScore'] as num?)?.toDouble() ?? 0;
-    final String verdict = result?['verdict'] ?? detail['verdict'] ?? 'UNKNOWN';
-    final String type = result?['type'] ?? 'unknown';
-    final String reason = result?['ai_analysis']?['reason'] ?? detail['ai_analysis']?['reason'] ?? 'No reason provided';
-    final String confidence = result?['ai_analysis']?['confidence'] ?? detail['ai_analysis']?['confidence'] ?? 'low';
-    final int policeCount = result?['penipumy']?['police_report_count'] ?? detail['penipumy']?['police_report_count'] ?? 0;
-    final bool isFraud = result?['penipumy']?['fraud'] ?? detail['penipumy']?['fraud'] ?? false;
-    final double spamScore = (result?['huggingface']?['spam_score'] as num?)?.toDouble() ?? (detail['huggingface']?['spam_score'] as num?)?.toDouble() ?? 0.0;
-    final int malicious = result?['virustotal']?['malicious'] ?? detail['virustotal']?['malicious'] ?? 0;
+    final Map<String, dynamic> detail =  Map<String, dynamic>.from(widget.result?['detail'] ?? widget.result ?? {});
+    final bool isScam = widget.result?['is_scam'] ?? detail['is_scam'] ?? false;
+    final double riskScore = (widget.result?['risk_score'] as num?)?.toDouble() ?? (widget.result?['riskScore'] as num?)?.toDouble() ?? 0;
+    final String verdict = widget.result?['verdict'] ?? detail['verdict'] ?? 'UNKNOWN';
+    final String type = widget.result?['type'] ?? 'unknown';
+    final String reason = widget.result?['ai_analysis']?['reason'] ?? detail['ai_analysis']?['reason'] ?? 'No reason provided';
+    final String confidence = widget.result?['ai_analysis']?['confidence'] ?? detail['ai_analysis']?['confidence'] ?? 'low';
+    final int policeCount = widget.result?['penipumy']?['police_report_count'] ?? detail['penipumy']?['police_report_count'] ?? 0;
+    final bool isFraud = widget.result?['penipumy']?['fraud'] ?? detail['penipumy']?['fraud'] ?? false;
+    final double spamScore = (widget.result?['huggingface']?['spam_score'] as num?)?.toDouble() ?? (detail['huggingface']?['spam_score'] as num?)?.toDouble() ?? 0.0;
+    final int malicious = widget.result?['virustotal']?['malicious'] ?? detail['virustotal']?['malicious'] ?? 0;
 
     return Scaffold(
       appBar: AppBar(
@@ -58,7 +66,6 @@ class ScamreportPage extends StatelessWidget {
         ],
       ),
 
-      // Use a Column to pin buttons at the bottom
       body: Column(
         children: [
           Expanded(
@@ -119,7 +126,39 @@ class ScamreportPage extends StatelessWidget {
                     ],
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 25),
+
+                  // if (type == 'phone' && widget.result?['numverify'] != null) ...[
+                  //   Container(
+                  //     width: double.infinity,
+                  //     padding: const EdgeInsets.all(16),
+                  //     decoration: BoxDecoration(
+                  //       color: Colors.blue.shade50,
+                  //       borderRadius: BorderRadius.circular(16),
+                  //       border: Border.all(color: Colors.blue.shade100),
+                  //     ),
+                  //     child: Column(
+                  //       crossAxisAlignment: CrossAxisAlignment.start,
+                  //       children: [
+                  //         Row(
+                  //           children: [
+                  //             Icon(Icons.sim_card_rounded, size: 16, color: Colors.blue.shade700),
+                  //             const SizedBox(width: 6),
+                  //             Text("Phone Details",
+                  //               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.blue.shade700)),
+                  //           ],
+                  //         ),
+                  //         const SizedBox(height: 12),
+                  //         _PhoneDetailRow(label: 'Number',   value: widget.result?['numverify']?['international_format'] ?? widget.inputText),
+                  //         _PhoneDetailRow(label: 'Country',  value: widget.result?['numverify']?['country_name']         ?? '-'),
+                  //         _PhoneDetailRow(label: 'Carrier',  value: widget.result?['numverify']?['carrier']              ?? '-'),
+                  //         _PhoneDetailRow(label: 'Line Type',value: widget.result?['numverify']?['line_type']            ?? '-'),
+                  //         _PhoneDetailRow(label: 'Valid',    value: widget.result?['numverify']?['valid'] == true ? '✓ Yes' : '✗ No'),
+                  //       ],
+                  //     ),
+                  //   ),
+                  //   const SizedBox(height: 16),
+                  // ],
 
                   Container(
                     width: double.infinity,
@@ -202,7 +241,7 @@ class ScamreportPage extends StatelessWidget {
                   _EvidenceItem(
                     icon: Icons.warning_amber_rounded,
                     label: "Suspicious Engines",
-                    count: result?['virustotal']?['suspicious'] ?? 0,
+                    count: widget.result?['virustotal']?['suspicious'] ?? 0,
                   ),
                 ] else if (type == 'message') ...[
                   _EvidenceItem(
@@ -228,7 +267,90 @@ class ScamreportPage extends StatelessWidget {
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () {},
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext dialogContext) {
+                              return Dialog(
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(14),
+                                        decoration: BoxDecoration(color: Colors.red.shade50, shape: BoxShape.circle),
+                                        child: Icon(Icons.report_rounded, color: Colors.red.shade600, size: 36),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      const Text('Report this?',
+                                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF1A1A1A))),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'You are about to report "${widget.inputText}" as a scam. This will help protect other users.',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(fontSize: 13, color: Colors.grey.shade600, height: 1.45),
+                                      ),
+                                      const SizedBox(height: 24),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: OutlinedButton(
+                                              onPressed: () => Navigator.pop(dialogContext),
+                                              style: OutlinedButton.styleFrom(
+                                                side: BorderSide(color: Colors.grey.shade300),
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                              ),
+                                              child: const Text('Cancel',
+                                                style: TextStyle(color: Color(0xFF1A1A1A), fontWeight: FontWeight.w600)),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: ElevatedButton(
+                                              onPressed: () async {
+                                                Navigator.pop(dialogContext);
+                                                final success = await ReportService.submitReport(
+                                                  value     : widget.inputText,
+                                                  result    : widget.result,
+                                                  riskScore : riskScore,
+                                                  verdict   : verdict,
+                                                  reason    : reason,
+                                                );
+                                                if (mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(success
+                                                        ? 'Report submitted. Thank you!'
+                                                        : 'Failed to submit. Please try again.'),
+                                                      backgroundColor: success ? Colors.green.shade700 : Colors.red.shade600,
+                                                      behavior: SnackBarBehavior.floating,
+                                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                    ),
+                                                  );
+                                                }
+                                              },
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Colors.red.shade600,
+                                                foregroundColor: Colors.white,
+                                                elevation: 0,
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                              ),
+                                              child: const Text('Report', style: TextStyle(fontWeight: FontWeight.w700)),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
                         icon: const Icon(Icons.report_gmailerrorred_outlined,
                             size: 18),
                         label: const Text("Report"),
@@ -350,6 +472,26 @@ class _EvidenceItem extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _PhoneDetailRow extends StatelessWidget {
+  final String label;
+  final String value;
+  const _PhoneDetailRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+          Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF1A1A1A))),
+        ],
+      ),
     );
   }
 }

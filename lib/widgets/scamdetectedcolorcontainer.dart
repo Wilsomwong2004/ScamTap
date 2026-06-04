@@ -2,8 +2,7 @@ import 'package:ScamTap/models/scam_model.dart';
 import 'package:ScamTap/pages/scamreport_page.dart';
 import 'package:ScamTap/widgets/scoregauge.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:ScamTap/services/report_service.dart';
 
 class ScamDetectedColorContainer extends StatefulWidget {
   final Map<String, dynamic>? result;
@@ -19,47 +18,34 @@ class _ScamDetectedColorContainerState extends State<ScamDetectedColorContainer>
     "Warning": Color.fromRGBO(252, 220, 114, 1),
     "Safe": const Color.fromARGB(255, 96, 224, 107),
   };
-
-  Future<void> _submitReport(BuildContext context) async {
-    final String value = widget.result?['value'] ?? '';
+  
+  Future<void> _submitReport(BuildContext dialogContext) async {
+    final String value     = widget.result?['value'] ?? '';
     final double riskScore = (widget.result?['risk_score'] as num?)?.toDouble() ?? 0;
-    final String riskLevel = riskScore >= 60 ? 'Dangerous' : riskScore >= 30 ? 'Warning' : 'Safe';
-    final String uid = FirebaseAuth.instance.currentUser?.uid ?? 'anonymous';
+    final String verdict   = widget.result?['verdict'] ?? 'UNKNOWN';
+    final String reason    = widget.result?['ai_analysis']?['reason'] ?? '';
 
-    try {
-      await FirebaseFirestore.instance.collection('reports').add({
-        'value'     : value,
-        'riskScore' : riskScore,
-        'riskLevel' : riskLevel,
-        'reportedBy': uid,
-        'timestamp' : Timestamp.now(),
-        'detail'    : widget.result?['ai_analysis'] ?? {},
-        'rawData'   : widget.result ?? {},
-      });
+    final success = await ReportService.submitReport(
+      value     : value,
+      result    : widget.result,
+      riskScore : riskScore,
+      verdict   : verdict,
+      reason    : reason,
+    );
 
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Report submitted. Thank you!'),
-            backgroundColor: Colors.green.shade700,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Failed to submit report. Please try again.'),
-            backgroundColor: Colors.red.shade600,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
-      }
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(success
+            ? 'Report submitted. Thank you!'
+            : 'Failed to submit. Please try again.'),
+          backgroundColor: success ? Colors.green.shade700 : Colors.red.shade600,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
     }
-}
+  }
   
   @override
   Widget build(BuildContext context) {
@@ -184,17 +170,21 @@ class _ScamDetectedColorContainerState extends State<ScamDetectedColorContainer>
                                         child: Icon(Icons.report_rounded, color: Colors.red.shade600, size: 36),
                                       ),
                                       const SizedBox(height: 16),
-                                      const Text(
-                                        'Report this number?',
-                                        style: TextStyle(
-                                          fontSize: 17,
-                                          fontWeight: FontWeight.w800,
-                                          color: Color(0xFF1A1A1A),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
                                       Text(
-                                        'You are about to report "$value" as a scam. This will help protect other users.',
+                                      widget.result?['type'] == 'phone'
+                                          ? 'Report this number?'
+                                          : widget.result?['type'] == 'link'
+                                              ? 'Report this link?'
+                                              : 'Report this message?',
+                                      style: const TextStyle(
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFF1A1A1A),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'You are about to report as a ${widget.result?['type'] == 'phone' ? 'scam number' : widget.result?['type'] == 'link' ? 'malicious link' : 'scam message'}. This will help protect other users.',
                                         textAlign: TextAlign.center,
                                         style: TextStyle(
                                           fontSize: 13,
