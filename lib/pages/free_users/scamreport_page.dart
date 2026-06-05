@@ -194,62 +194,50 @@ class _ScamreportPageState extends State<ScamreportPage> {
                     const SizedBox(height: 12),
                   ],
 
-                  Container(
-                    width: double.infinity,
-                    height: 140,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color.fromARGB(255, 249, 202, 246),
-                        Color.fromARGB(255, 208, 199, 247),
-                        Color.fromRGBO(227, 222, 251, 1),
-                      ],
-                    ),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    alignment: Alignment.center,
-                    child: Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Column(
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.auto_awesome_rounded, size: 16, color: Colors.grey[800], fontWeight: FontWeight.bold,),
-                              const SizedBox(width: 8),
-                              Text(
-                                "AI analysis:",
-                                style: TextStyle(fontSize: 12, color: Colors.grey[800], fontWeight: FontWeight.w500),
-                              ),
+                  // Container(
+                  //   width: double.infinity,
+                  //   height: 140,
+                  //   decoration: BoxDecoration(
+                  //     gradient: LinearGradient(
+                  //     begin: Alignment.topLeft,
+                  //     end: Alignment.bottomRight,
+                  //     colors: [
+                  //       Color.fromARGB(255, 249, 202, 246),
+                  //       Color.fromARGB(255, 208, 199, 247),
+                  //       Color.fromRGBO(227, 222, 251, 1),
+                  //     ],
+                  //   ),
+                  //     borderRadius: BorderRadius.circular(20),
+                  //   ),
+                  //   alignment: Alignment.center,
+                  //   child: Padding(
+                  //     padding: const EdgeInsets.all(20.0),
+                  //     child: Column(
+                  //       children: [
+                  //         Row(
+                  //           children: [
+                  //             Icon(Icons.auto_awesome_rounded, size: 16, color: Colors.grey[800], fontWeight: FontWeight.bold,),
+                  //             const SizedBox(width: 8),
+                  //             Text(
+                  //               "AI analysis:",
+                  //               style: TextStyle(fontSize: 12, color: Colors.grey[800], fontWeight: FontWeight.w500),
+                  //             ),
 
-                              const SizedBox(height: 10),
-                            ],
-                          ),
+                  //             const SizedBox(height: 10),
+                  //           ],
+                  //         ),
 
-                          const SizedBox(height: 10),
+                  //         const SizedBox(height: 10),
 
-                          Text(
-                            reason,
-                            style: TextStyle(fontSize: 12, color: Colors.grey[800]),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: confidence == 'high' ? Colors.red[100] : Colors.orange[100],
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      "Confidence: $confidence",
-                      style: TextStyle(fontSize: 11, color: Colors.black87),
-                    ),
-                  ),
-
+                  //         Text(
+                  //           reason,
+                  //           style: TextStyle(fontSize: 12, color: Colors.grey[800]),
+                  //         ),
+                  //       ],
+                  //     ),
+                  //   ),
+                  // ),
+   
                   const SizedBox(height: 24),
 
                   if (type == 'phone') ...[
