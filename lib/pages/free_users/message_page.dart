@@ -8,8 +8,6 @@ import 'package:ScamTap/services/firestore_service.dart';
 import 'package:flutter/material.dart';
 import 'package:ScamTap/widgets/animatedhinttextfield.dart';
 import 'package:ScamTap/widgets/miniprofile.dart';
-import 'package:ScamTap/widgets/scoregauge.dart';
-import 'package:ScamTap/pages/free_users/scanning_page.dart';
 
 class MessagePage extends StatefulWidget {
   const MessagePage({super.key});
@@ -236,7 +234,7 @@ Widget build(BuildContext context) {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.warning_rounded, color: Colors.red, size: 30),
+                          Icon(Icons.search_off_rounded, color: Colors.white70, size: 30),
                           SizedBox(height: 5),
                           Text(
                             "No record found!",

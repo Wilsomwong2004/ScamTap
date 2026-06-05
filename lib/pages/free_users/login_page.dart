@@ -25,9 +25,12 @@ class _LoginPageState extends State<LoginPage> {
       final result = await authService.signInWithGoogle();
 
       if (result.success) {
-        Navigator.pushReplacement(
+        Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => const Navibar()),
+          MaterialPageRoute(
+            builder: (context) => const Navibar(),
+          ),
+          (route) => false,
         );
       } else {
         ScaffoldMessenger.of(
