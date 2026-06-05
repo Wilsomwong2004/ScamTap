@@ -1,4 +1,4 @@
-package com.example.ScamTap
+package com.example.scam_tap
 
 import io.flutter.embedding.android.FlutterActivity
 

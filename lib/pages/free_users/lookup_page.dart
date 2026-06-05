@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:ScamTap/pages/free_users/premium_purchase_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ScamTap/models/search_record_model.dart';
 import 'package:ScamTap/pages/free_users/scamreport_page.dart';
@@ -55,34 +56,44 @@ class _LookupPageState extends State<LookupPage> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Padding(
-          padding: EdgeInsets.only(left: 6),
-          child: Text(
-            "Lookup",
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 22,
-              color: Colors.white,
-            ),
-          ),
+        backgroundColor: Colors.transparent,
+        title: const Padding(
+          padding: EdgeInsets.only(left: 8),
+          child: Text("Lookup", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Colors.white)),
         ),
-
         actions: [
           Padding(
-            padding: EdgeInsets.only(right: 18),
+            padding: const EdgeInsets.only(right: 8),
             child: GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const Miniprofile()),
-                );
-              },
-              child: CircleAvatar(
-                backgroundColor: const Color.fromARGB(255, 44, 106, 46),
-                child: Icon(Icons.person, color: Colors.white),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const PremiumPurchasePage())),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFFC940), Color(0xFFFF9500)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [BoxShadow(color: const Color(0xFFFFC940).withOpacity(0.4), blurRadius: 8, offset: const Offset(0, 2))],
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.workspace_premium_rounded, color: Colors.white, size: 15),
+                    SizedBox(width: 4),
+                    Text('PRO', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+                  ],
+                ),
               ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 18),
+            child: GestureDetector(
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const Miniprofile())),
+              child: const CircleAvatar(backgroundColor: Color.fromARGB(255, 55, 126, 57), child: Icon(Icons.person, color: Colors.white)),
             ),
           ),
         ],

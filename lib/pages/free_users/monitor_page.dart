@@ -1,3 +1,4 @@
+import 'package:ScamTap/pages/free_users/premium_purchase_page.dart';
 import 'package:ScamTap/widgets/miniprofile.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -17,49 +18,48 @@ class _MonitorPageState extends State<MonitorPage> {
   String _selectedPeriod = '7 days';
   final _analyticsService = AnalyticsService();
 
-  int _daysFromPeriod() {
-    switch (_selectedPeriod) {
-      case '7 days': return 7;
-      case '30 days': return 30;
-      case '90 days': return 90;
-      case '1 year': return 365;
-      default: return 30;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Padding(
-          padding: EdgeInsets.only(left: 6),
-          child: Text(
-            "Monitor",
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 22,
-              color: Colors.black,
-            ),
-          ),
+        title: const Padding(
+          padding: EdgeInsets.only(left: 8),
+          child: Text("Monitor", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),
         ),
-
         actions: [
           Padding(
-            padding: EdgeInsets.only(right: 18),
+            padding: const EdgeInsets.only(right: 8),
             child: GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const Miniprofile()),
-                );
-              },
-              child: CircleAvatar(
-                backgroundColor: const Color.fromARGB(255, 44, 106, 46),
-                child: Icon(Icons.person, color: Colors.white),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const PremiumPurchasePage())),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFFC940), Color(0xFFFF9500)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [BoxShadow(color: const Color(0xFFFFC940).withOpacity(0.4), blurRadius: 8, offset: const Offset(0, 2))],
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.workspace_premium_rounded, color: Colors.white, size: 15),
+                    SizedBox(width: 4),
+                    Text('PRO', style: TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+                  ],
+                ),
               ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 18),
+            child: GestureDetector(
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const Miniprofile())),
+              child: const CircleAvatar(backgroundColor: const Color.fromARGB(255, 44, 51, 106), child: Icon(Icons.person, color: Colors.white)),
             ),
           ),
         ],
@@ -72,7 +72,7 @@ class _MonitorPageState extends State<MonitorPage> {
           }
 
           final allRecords = snapshot.data ?? [];
-          final cutoff = DateTime.now().subtract(Duration(days: _daysFromPeriod()));
+          final cutoff = DateTime.now().subtract(Duration(days: 7));
           final records = allRecords.where((r) => r.timestamp.isAfter(cutoff)).toList();
 
           // STATS
