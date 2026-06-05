@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:ScamTap/widgets/miniprofile.dart';
-import 'package:ScamTap/models/users_model.dart';
 import 'package:ScamTap/services/user_service.dart';
 import 'package:ScamTap/pages/free_users/scamreport_page.dart';
 import 'package:ScamTap/services/firestore_service.dart';
