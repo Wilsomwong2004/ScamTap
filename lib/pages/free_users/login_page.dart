@@ -280,6 +280,21 @@ class _LoginPageState extends State<LoginPage> {
                             print("ROLE = $role");
                             print("EMAIL = $userEmail");
 
+                            // SUSPENDED USER
+                            if (role == "suspended") {
+                              await FirebaseAuth.instance.signOut();
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    "Your account has been suspended by admin",
+                                  ),
+                                ),
+                              );
+
+                              return;
+                            }
+
                             if (role == "admin" &&
                                 userEmail.toLowerCase() ==
                                     "admin@scamtap.com") {

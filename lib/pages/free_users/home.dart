@@ -9,6 +9,8 @@ import 'package:ScamTap/models/search_record_model.dart';
 import 'package:ScamTap/pages/free_users/premium_purchase_page.dart';
 import 'package:ScamTap/pages/free_users/all_scam_alert_page.dart';
 import 'package:ScamTap/widgets/news_section.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class HomePage extends StatefulWidget {
   final Function(int)? onTabChange;
@@ -22,9 +24,64 @@ class _HomePageState extends State<HomePage> {
   String? _username;
 
   @override
-  void initState() {
-    super.initState();
-    _loadUsername();
+void initState() {
+  super.initState();
+
+  _loadUsername();
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    checkNotifications();
+  });
+}
+
+  Future<void> checkNotifications() async {
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+
+      if (currentUser == null) return;
+
+      final userDoc = await FirebaseFirestore.instance
+          .collection("usersData")
+          .doc(currentUser.uid)
+          .get();
+
+      String userEmail = userDoc.data()?['Email'] ?? '';
+
+      final notificationSnapshot = await FirebaseFirestore.instance
+          .collection('notifications')
+          .where('isRead', isEqualTo: false)
+          .get();
+
+      for (var doc in notificationSnapshot.docs) {
+        final data = doc.data();
+
+        if (data['targetUser'] == 'all' || data['targetUser'] == userEmail) {
+          if (!mounted) return;
+
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Text(data['title'] ?? 'Notification'),
+              content: Text(data['message'] ?? ''),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text("OK"),
+                ),
+              ],
+            ),
+          );
+
+          await doc.reference.update({'isRead': true});
+
+          break;
+        }
+      }
+    } catch (e) {
+      print(e);
+    }
   }
 
   Future<void> _loadUsername() async {
@@ -49,15 +106,26 @@ class _HomePageState extends State<HomePage> {
         elevation: 0,
         title: const Padding(
           padding: EdgeInsets.only(left: 8),
-          child: Text("ScamTap", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),
+          child: Text(
+            "ScamTap",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
+          ),
         ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: GestureDetector(
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const PremiumPurchasePage())),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const PremiumPurchasePage(),
+                ),
+              ),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [Color(0xFFFFC940), Color(0xFFFF9500)],
@@ -65,14 +133,32 @@ class _HomePageState extends State<HomePage> {
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(20),
-                  boxShadow: [BoxShadow(color: const Color(0xFFFFC940).withOpacity(0.4), blurRadius: 8, offset: const Offset(0, 2))],
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFFC940).withOpacity(0.4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.workspace_premium_rounded, color: Colors.white, size: 15),
+                    Icon(
+                      Icons.workspace_premium_rounded,
+                      color: Colors.white,
+                      size: 15,
+                    ),
                     SizedBox(width: 4),
-                    Text('PRO', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+                    Text(
+                      'PRO',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -81,8 +167,14 @@ class _HomePageState extends State<HomePage> {
           Padding(
             padding: const EdgeInsets.only(right: 18),
             child: GestureDetector(
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const Miniprofile())),
-              child: const CircleAvatar(backgroundColor: Colors.green, child: Icon(Icons.person, color: Colors.white)),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const Miniprofile()),
+              ),
+              child: const CircleAvatar(
+                backgroundColor: Colors.green,
+                child: Icon(Icons.person, color: Colors.white),
+              ),
             ),
           ),
         ],
@@ -92,15 +184,25 @@ class _HomePageState extends State<HomePage> {
         builder: (context, snapshot) {
           final records = snapshot.data ?? [];
           final now = DateTime.now();
-          final weekRecords = records.where((r) => r.timestamp.isAfter(now.subtract(const Duration(days: 7)))).toList();
+          final weekRecords = records
+              .where(
+                (r) =>
+                    r.timestamp.isAfter(now.subtract(const Duration(days: 7))),
+              )
+              .toList();
           final scamsThisWeek = weekRecords.where((r) {
-            return r.rawData?['is_scam'] == true
-                || r.detail['is_scam'] == true
-                || r.detail['verdict'] == 'SCAM'
-                || r.riskLevel == 'Dangerous';
+            return r.rawData?['is_scam'] == true ||
+                r.detail['is_scam'] == true ||
+                r.detail['verdict'] == 'SCAM' ||
+                r.riskLevel == 'Dangerous';
           }).length;
-          final progress = records.isEmpty ? 0.0 : (scamsThisWeek / records.length).clamp(0.0, 1.0);
-          final latestScams = records.where((r) => r.detail['ai_analysis'] != null).take(4).toList();
+          final progress = records.isEmpty
+              ? 0.0
+              : (scamsThisWeek / records.length).clamp(0.0, 1.0);
+          final latestScams = records
+              .where((r) => r.detail['ai_analysis'] != null)
+              .take(4)
+              .toList();
 
           return SingleChildScrollView(
             padding: EdgeInsets.only(top: kToolbarHeight + 50, bottom: 120),
@@ -113,11 +215,22 @@ class _HomePageState extends State<HomePage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text("Welcome back,", style: TextStyle(fontSize: 28, fontWeight: FontWeight.w600, color: Colors.black87)),
+                      const Text(
+                        "Welcome back,",
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
                       const SizedBox(height: 4),
                       Text(
                         _username != null ? "$_username!" : "...",
-                        style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.green.shade700),
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green.shade700,
+                        ),
                       ),
                     ],
                   ),
@@ -125,7 +238,10 @@ class _HomePageState extends State<HomePage> {
 
                 // SCAM PROTECTION CARD
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 25,
+                    vertical: 16,
+                  ),
                   child: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
@@ -135,7 +251,13 @@ class _HomePageState extends State<HomePage> {
                         colors: [Colors.red.shade50, Colors.orange.shade50],
                       ),
                       borderRadius: BorderRadius.circular(24),
-                      boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 12, offset: Offset(0, 4))],
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 12,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(20),
@@ -146,15 +268,36 @@ class _HomePageState extends State<HomePage> {
                             children: [
                               Container(
                                 padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(color: Colors.red.shade100, borderRadius: BorderRadius.circular(12)),
-                                child: Icon(Icons.shield, color: Colors.red.shade700, size: 28),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.shade100,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(
+                                  Icons.shield,
+                                  color: Colors.red.shade700,
+                                  size: 28,
+                                ),
                               ),
                               const SizedBox(width: 12),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text("Scam Protection", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
-                                  Text("Active", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green.shade700)),
+                                  Text(
+                                    "Scam Protection",
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey.shade700,
+                                    ),
+                                  ),
+                                  Text(
+                                    "Active",
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.green.shade700,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ],
@@ -162,13 +305,18 @@ class _HomePageState extends State<HomePage> {
                           const SizedBox(height: 16),
                           Text(
                             "$scamsThisWeek scam${scamsThisWeek == 1 ? '' : 's'} detected this week",
-                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                           const SizedBox(height: 12),
                           LinearProgressIndicator(
                             value: progress,
                             backgroundColor: Colors.grey.shade300,
-                            color: scamsThisWeek > 0 ? Colors.red : Colors.green,
+                            color: scamsThisWeek > 0
+                                ? Colors.red
+                                : Colors.green,
                             borderRadius: BorderRadius.circular(4),
                           ),
                         ],
@@ -179,14 +327,41 @@ class _HomePageState extends State<HomePage> {
 
                 // QUICK ACTIONS
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 25,
+                    vertical: 8,
+                  ),
                   child: Row(
                     children: [
-                      Expanded(child: _buildQuickActionCard(context, icon: Icons.search, label: "Verify\nMessage", color: Colors.blue.shade600, onTap: () => widget.onTabChange?.call(2))),
+                      Expanded(
+                        child: _buildQuickActionCard(
+                          context,
+                          icon: Icons.search,
+                          label: "Verify\nMessage",
+                          color: Colors.blue.shade600,
+                          onTap: () => widget.onTabChange?.call(2),
+                        ),
+                      ),
                       const SizedBox(width: 16),
-                      Expanded(child: _buildQuickActionCard(context, icon: Icons.call, label: "Lookup\nNumber", color: Colors.green.shade600, onTap: () => widget.onTabChange?.call(1))),
+                      Expanded(
+                        child: _buildQuickActionCard(
+                          context,
+                          icon: Icons.call,
+                          label: "Lookup\nNumber",
+                          color: Colors.green.shade600,
+                          onTap: () => widget.onTabChange?.call(1),
+                        ),
+                      ),
                       const SizedBox(width: 16),
-                      Expanded(child: _buildQuickActionCard(context, icon: Icons.bar_chart, label: "Monitor\nScams", color: Colors.orange.shade600, onTap: () => widget.onTabChange?.call(3))),
+                      Expanded(
+                        child: _buildQuickActionCard(
+                          context,
+                          icon: Icons.bar_chart,
+                          label: "Monitor\nScams",
+                          color: Colors.orange.shade600,
+                          onTap: () => widget.onTabChange?.call(3),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -350,7 +525,8 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildQuickActionCard(BuildContext context, {
+  Widget _buildQuickActionCard(
+    BuildContext context, {
     required IconData icon,
     required String label,
     required Color color,
@@ -363,17 +539,35 @@ class _HomePageState extends State<HomePage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 2))],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Column(
           children: [
             Container(
               padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Icon(icon, color: color, size: 28),
             ),
             const SizedBox(height: 8),
-            Text(label, textAlign: TextAlign.center, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade700, height: 1.2)),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade700,
+                height: 1.2,
+              ),
+            ),
           ],
         ),
       ),

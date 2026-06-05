@@ -20,6 +20,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
   int totalUsers = 0;
   int totalReports = 0;
+  int pendingReports = 0;
+  int totalNotifications = 0;
   final _adminService = AdminService();
 
   @override
@@ -31,9 +33,21 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   Future<void> loadDashboardData() async {
     final stats = await _adminService.getDashboardStats();
 
+    final pendingSnapshot = await FirebaseFirestore.instance
+        .collection('scam_reports')
+        .where('reportStatus', isEqualTo: 'Pending')
+        .get();
+
+    final notificationSnapshot = await FirebaseFirestore.instance
+        .collection('notifications')
+        .get();
+
     setState(() {
       totalUsers = stats.totalUsers;
       totalReports = stats.totalReports;
+
+      pendingReports = pendingSnapshot.docs.length;
+      totalNotifications = notificationSnapshot.docs.length;
     });
   }
 
@@ -123,7 +137,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 Expanded(
                   child: dashboardCard(
                     title: "Pending",
-                    value: "10",
+                    value: "$pendingReports",
                     icon: Icons.warning_amber_rounded,
                     color: Colors.orange,
                   ),
@@ -134,7 +148,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 Expanded(
                   child: dashboardCard(
                     title: "Notifications",
-                    value: "23",
+                    value: "$totalNotifications",
                     icon: Icons.notifications,
                     color: Colors.green,
                   ),

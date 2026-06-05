@@ -11,111 +11,186 @@ class Miniprofile extends StatefulWidget {
 }
 
 class _MiniprofileState extends State<Miniprofile> {
-  String? _username;
-  String? _email;
-
-  bool _scamAlerts = true;
-  bool _appUpdates = false;
-
+  String username = "";
+  String email = "";
+  String uid = "";
 
   @override
   void initState() {
     super.initState();
-    _loadUserData();
+    loadUserData();
+    syncEmailWithFirestore();
   }
 
-  Future<void> _loadUserData() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid != null) {
-      final doc = await FirebaseFirestore.instance
-          .collection('usersData')
-          .doc(uid)
-          .get();
-      if (mounted) {
-        setState(() {
-          _username = doc.data()?['Username'] ?? 'User';
-          _email = doc.data()?['Email'] ?? '';
-        });
-      }
+  Future<void> syncEmailWithFirestore() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) return;
+
+    await user.reload();
+
+    final refreshedUser = FirebaseAuth.instance.currentUser;
+
+    if (refreshedUser == null) return;
+
+    final uid = refreshedUser.uid;
+
+    if (refreshedUser.email != null) {
+      await FirebaseFirestore.instance.collection('usersData').doc(uid).update({
+        'Email': refreshedUser.email,
+      });
+
+      setState(() {
+        email = refreshedUser.email!;
+      });
     }
+  }
+
+  Future<void> loadUserData() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    if (uid == null) return;
+
+    final doc = await FirebaseFirestore.instance
+        .collection("usersData")
+        .doc(uid)
+        .get();
+
+    setState(() {
+      this.uid = uid;
+      username = doc.data()?["Username"] ?? "User";
+      email = doc.data()?["Email"] ?? "";
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF3F7F1),
+
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color(0xFFF3F7F1),
         elevation: 0,
+
         title: const Text(
           "Settings",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Colors.black),
+
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
+
         iconTheme: const IconThemeData(color: Colors.black),
       ),
+
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
+        padding: const EdgeInsets.all(20),
+
         child: Column(
           children: [
-            const SizedBox(height: 10),
+            const SizedBox(height: 20),
 
+            // PROFILE
             CircleAvatar(
-              radius: 60,
-              backgroundColor: Colors.green,
-              child: const Icon(Icons.person, size: 65, color: Colors.white),
+              radius: 55,
+              backgroundColor: Colors.green.shade700,
+
+              child: const Icon(Icons.person, size: 60, color: Colors.white),
             ),
 
-            const SizedBox(height: 15),
+            const SizedBox(height: 18),
 
             Text(
-              _username ?? '...',
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              username,
+
+              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+            ),
+
+            const SizedBox(height: 5),
+
+            const Text(
+              "ScamTap User",
+
+              style: TextStyle(color: Colors.grey, fontSize: 15),
             ),
 
             Text(
-              _email ?? '',
-              style: const TextStyle(color: Colors.grey),
+              email,
+              style: const TextStyle(color: Colors.grey, fontSize: 15),
             ),
 
             const SizedBox(height: 35),
 
-            _buildCard(context, Icons.person, "Edit Profile", onTap: () {
-              _showEditProfileDialog(context);
-            }),
+            // CARDS
+            buildCard(
+              context,
+              Icons.person_outline,
+              "Manage Profile",
+              "Update user account information",
+            ),
 
-            _buildCard(context, Icons.notifications, "Notifications", onTap: () {
-              _showNotificationsDialog(context);
-            }),
+            buildCard(
+              context,
+              Icons.security,
+              "Security Settings",
+              "Manage password and authentication",
+            ),
 
-            _buildCard(context, Icons.lock, "Privacy", onTap: () {
-              _showChangePasswordDialog(context);
-            }),
+            buildCard(
+              context,
+              Icons.notifications_none,
+              "Notification Settings",
+              "Control system notifications",
+            ),
 
-            _buildCard(context, Icons.help, "Help Center", onTap: () {
-              _showHelpCenterDialog(context);
-            }),
+            buildCard(
+              context,
+              Icons.lock_outline,
+              "Privacy",
+              "Terms and conditions",
+            ),
 
-            const SizedBox(height: 160),
+            buildCard(
+              context,
+              Icons.info_outline,
+              "About System",
+              "View application information",
+            ),
 
+            const SizedBox(height: 50),
+
+            // SIGN OUT BUTTON
             SizedBox(
               width: double.infinity,
               height: 55,
+
               child: ElevatedButton(
                 onPressed: () async {
                   await FirebaseAuth.instance.signOut();
-                  if (mounted) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => const LoginPage()),
-                    );
-                  }
+
+                  Navigator.pushAndRemoveUntil(
+                    context,
+
+                    MaterialPageRoute(builder: (context) => const LoginPage()),
+
+                    (route) => false,
+                  );
                 },
+
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
                 ),
+
                 child: const Text(
                   "Sign Out",
-                  style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold),
+
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
               ),
             ),
@@ -125,285 +200,506 @@ class _MiniprofileState extends State<Miniprofile> {
     );
   }
 
-  // EDIT PROFILE DIALOG
-  void _showEditProfileDialog(BuildContext context) {
-    final usernameController = TextEditingController(text: _username);
-    final currentPasswordController = TextEditingController();
-    final newPasswordController = TextEditingController();
-    final confirmPasswordController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Edit Profile"),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: usernameController,
-                decoration: InputDecoration(
-                  labelText: "Username",
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: currentPasswordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: "Current Password (required to change password)",
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: newPasswordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: "New Password (optional)",
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: confirmPasswordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: "Confirm New Password",
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final newUsername = usernameController.text.trim();
-              final currentPassword = currentPasswordController.text.trim();
-              final newPassword = newPasswordController.text.trim();
-              final confirmPassword = confirmPasswordController.text.trim();
-
-              if (newUsername.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Username cannot be empty")),
-                );
-                return;
-              }
-
-              if (newPassword.isNotEmpty && newPassword != confirmPassword) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Passwords do not match")),
-                );
-                return;
-              }
-
-              if (newPassword.isNotEmpty && currentPassword.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Enter current password to change password")),
-                );
-                return;
-              }
-
-              try {
-                final user = FirebaseAuth.instance.currentUser!;
-                final uid = user.uid;
-
-                // UPDATE USERNAME IN FIRESTORE
-                await FirebaseFirestore.instance
-                    .collection('usersData')
-                    .doc(uid)
-                    .update({'Username': newUsername});
-                setState(() => _username = newUsername);
-
-                // UPDATE PASSWORD IF FILLED
-                if (newPassword.isNotEmpty) {
-                  // RE-AUTHENTICATE FIRST
-                  final cred = EmailAuthProvider.credential(
-                    email: user.email!,
-                    password: currentPassword,
-                  );
-                  await user.reauthenticateWithCredential(cred);
-
-                  // NOW UPDATE PASSWORD
-                  await user.updatePassword(newPassword);
-                  await FirebaseFirestore.instance
-                      .collection('usersData')
-                      .doc(uid)
-                      .update({'Password': newPassword});
-                }
-
-                if (mounted) Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Profile updated!")),
-                );
-              } on FirebaseAuthException catch (e) {
-                String message = "Update failed";
-                if (e.code == 'wrong-password') message = "Current password is incorrect";
-                if (e.code == 'weak-password') message = "New password is too weak";
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(message)),
-                );
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Error: $e")),
-                );
-              }
-            },
-            child: const Text("Save"),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // NOTIFICATIONS DIALOG
-  void _showNotificationsDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text("Notifications"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SwitchListTile(
-                title: const Text("Scam Alerts"),
-                subtitle: const Text("Get notified about new scams"),
-                value: _scamAlerts,
-                onChanged: (val) {
-                  setDialogState(() => _scamAlerts = val);
-                  setState(() => _scamAlerts = val); // saves state outside dialog
-                },
-                activeColor: Colors.green,
-              ),
-              SwitchListTile(
-                title: const Text("App Updates"),
-                subtitle: const Text("Get notified about updates"),
-                value: _appUpdates,
-                onChanged: (val) {
-                  setDialogState(() => _appUpdates = val);
-                  setState(() => _appUpdates = val); // saves state outside dialog
-                },
-                activeColor: Colors.green,
-              ),
-            ],
-          ),
-          actions: [
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Done"),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // CHANGE PASSWORD DIALOG
-  void _showChangePasswordDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Privacy & Terms"),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Text(
-                "Terms and Conditions",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              SizedBox(height: 10),
-              Text(
-                "1. Acceptance of Terms\n"
-                "By using ScamTap, you agree to these terms. If you do not agree, please stop using the app.\n\n"
-                "2. Use of Service\n"
-                "ScamTap is provided for personal, non-commercial use only. You must not misuse our services.\n\n"
-                "3. Data Collection\n"
-                "We collect search queries and usage data to improve scam detection accuracy. Your data is stored securely and not shared with third parties.\n\n"
-                "4. Accuracy Disclaimer\n"
-                "ScamTap uses AI and third-party APIs to detect scams. We do not guarantee 100% accuracy. Always use your own judgment.\n\n"
-                "5. Account Responsibility\n"
-                "You are responsible for maintaining the security of your account and password.\n\n"
-                "6. Changes to Terms\n"
-                "We reserve the right to update these terms at any time. Continued use of the app means you accept the new terms.\n\n"
-                "7. Contact\n"
-                "For any concerns, contact us at support@scamtap.com",
-                style: TextStyle(fontSize: 13, height: 1.5),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Close"),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // HELP CENTER DIALOG
-  void _showHelpCenterDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Help Center"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
-            Text("📧 Email: support@scamtap.com"),
-            SizedBox(height: 10),
-            Text("🕐 Support Hours: Mon-Fri, 9am-6pm"),
-            SizedBox(height: 20),
-            Text("FAQ", style: TextStyle(fontWeight: FontWeight.bold)),
-            SizedBox(height: 8),
-            Text("Q: How do I report a scam?"),
-            Text("A: Use the Block/Report button on the scan result page."),
-            SizedBox(height: 8),
-            Text("Q: How accurate is the scan?"),
-            Text("A: We use multiple APIs + AI for best accuracy."),
-          ],
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Close"),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCard(BuildContext context, IconData icon, String title, {required VoidCallback onTap}) {
+  Widget buildCard(
+    BuildContext context,
+    IconData icon,
+    String title,
+    String subtitle,
+  ) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 15),
+      padding: const EdgeInsets.only(bottom: 18),
+
       child: GestureDetector(
-        onTap: onTap,
+        onTap: () {
+          // MANAGE PROFILE
+          if (title == "Manage Profile") {
+            TextEditingController usernameController = TextEditingController(
+              text: username,
+            );
+
+            TextEditingController emailController = TextEditingController(
+              text: email,
+            );
+
+            showDialog(
+              context: context,
+
+              builder: (context) {
+                return AlertDialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+
+                  title: const Text(
+                    "Manage Profile",
+
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+
+                  content: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+
+                      children: [
+                        CircleAvatar(
+                          radius: 40,
+                          backgroundColor: Colors.green.shade700,
+
+                          child: const Icon(
+                            Icons.person,
+                            color: Colors.white,
+                            size: 40,
+                          ),
+                        ),
+
+                        const SizedBox(height: 25),
+
+                        TextField(
+                          controller: usernameController,
+
+                          decoration: InputDecoration(
+                            labelText: "Username",
+
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        TextField(
+                          controller: emailController,
+                          readOnly: false,
+
+                          decoration: InputDecoration(
+                            labelText: "Email",
+
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+
+                      child: const Text(
+                        "Cancel",
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+
+                    ElevatedButton(
+                      onPressed: () async {
+                        String newEmail = emailController.text.trim();
+
+                        final user = FirebaseAuth.instance.currentUser!;
+
+                        await FirebaseFirestore.instance
+                            .collection('usersData')
+                            .doc(uid)
+                            .update({
+                              'Username': usernameController.text.trim(),
+                            });
+
+                        if (newEmail != user.email) {
+                          await user.verifyBeforeUpdateEmail(newEmail);
+                        }
+
+                        setState(() {
+                          username = usernameController.text.trim();
+                        });
+                        Navigator.pop(context);
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Profile Updated Successfully"),
+                          ),
+                        );
+                      },
+
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                      ),
+
+                      child: const Text(
+                        "Save",
+
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          }
+          // SECURITY SETTINGS
+          else if (title == "Security Settings") {
+            TextEditingController passwordController = TextEditingController();
+
+            TextEditingController confirmController = TextEditingController();
+
+            showDialog(
+              context: context,
+
+              builder: (context) {
+                return AlertDialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+
+                  title: const Text(
+                    "Security Settings",
+
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+
+                  content: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+
+                      children: [
+                        TextField(
+                          controller: passwordController,
+                          obscureText: true,
+
+                          decoration: InputDecoration(
+                            labelText: "New Password",
+
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        TextField(
+                          controller: confirmController,
+                          obscureText: true,
+
+                          decoration: InputDecoration(
+                            labelText: "Confirm Password",
+
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+
+                      child: const Text("Cancel"),
+                    ),
+
+                    ElevatedButton(
+                      onPressed: () async {
+                        String newPassword = passwordController.text.trim();
+
+                        String confirmPassword = confirmController.text.trim();
+
+                        if (newPassword.isEmpty || confirmPassword.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Please fill all fields"),
+                            ),
+                          );
+                          return;
+                        }
+
+                        if (newPassword != confirmPassword) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Passwords do not match"),
+                            ),
+                          );
+                          return;
+                        }
+
+                        try {
+                          await FirebaseAuth.instance.currentUser!
+                              .updatePassword(newPassword);
+
+                          await FirebaseFirestore.instance
+                              .collection("usersData")
+                              .doc(uid)
+                              .update({"Password": newPassword});
+
+                          Navigator.pop(context);
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Password Updated Successfully"),
+                            ),
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(
+                            context,
+                          ).showSnackBar(SnackBar(content: Text("Error: $e")));
+                        }
+                      },
+
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                      ),
+
+                      child: const Text(
+                        "Save",
+
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          }
+          // NOTIFICATION SETTINGS
+          else if (title == "Notification Settings") {
+            showDialog(
+              context: context,
+
+              builder: (context) {
+                bool scamAlert = true;
+                bool emailAlert = true;
+                bool pushAlert = false;
+
+                return StatefulBuilder(
+                  builder: (context, setState) {
+                    return AlertDialog(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+
+                      title: const Text(
+                        "Notification Settings",
+
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+
+                        children: [
+                          SwitchListTile(
+                            value: scamAlert,
+
+                            onChanged: (value) {
+                              setState(() {
+                                scamAlert = value;
+                              });
+                            },
+
+                            title: const Text("Scam Alerts"),
+                          ),
+
+                          SwitchListTile(
+                            value: emailAlert,
+
+                            onChanged: (value) {
+                              setState(() {
+                                emailAlert = value;
+                              });
+                            },
+
+                            title: const Text("Email Notifications"),
+                          ),
+
+                          SwitchListTile(
+                            value: pushAlert,
+
+                            onChanged: (value) {
+                              setState(() {
+                                pushAlert = value;
+                              });
+                            },
+
+                            title: const Text("Push Notifications"),
+                          ),
+                        ],
+                      ),
+
+                      actions: [
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Notification Settings Saved"),
+                              ),
+                            );
+                          },
+
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                          ),
+
+                          child: const Text(
+                            "Save",
+
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+            );
+          } else if (title == "Privacy") {
+            showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: const Text("Privacy & Terms"),
+                  content: const SingleChildScrollView(
+                    child: Text(
+                      "ScamTap collects account information and usage data "
+                      "to improve scam detection services. User information "
+                      "is stored securely and is not shared with third parties.",
+                    ),
+                  ),
+                  actions: [
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text("Close"),
+                    ),
+                  ],
+                );
+              },
+            );
+          }
+          // ABOUT SYSTEM
+          else {
+            showDialog(
+              context: context,
+
+              builder: (context) {
+                return AlertDialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+
+                  title: const Text(
+                    "About ScamTap",
+
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+
+                  content: const Column(
+                    mainAxisSize: MainAxisSize.min,
+
+                    crossAxisAlignment: CrossAxisAlignment.start,
+
+                    children: [
+                      Text("Version: 1.0.0"),
+
+                      SizedBox(height: 10),
+
+                      Text("Developer: ScamTap Team"),
+
+                      SizedBox(height: 10),
+
+                      Text(
+                        "ScamTap helps users detect scam phone numbers, suspicious links and dangerous messages using AI-powered scam analysis.",
+                      ),
+                    ],
+                  ),
+
+                  actions: [
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                      ),
+
+                      child: const Text(
+                        "OK",
+
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          }
+        },
+
         child: Container(
           padding: const EdgeInsets.all(18),
+
           decoration: BoxDecoration(
-            color: const Color.fromARGB(255, 233, 247, 235),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: const [
-              BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 3)),
+            color: Colors.white,
+
+            borderRadius: BorderRadius.circular(22),
+
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
             ],
           ),
+
           child: Row(
             children: [
-              Icon(icon, color: Colors.green),
+              CircleAvatar(
+                radius: 24,
+                backgroundColor: Colors.green.withOpacity(0.15),
+
+                child: Icon(icon, color: Colors.green.shade700),
+              ),
+
               const SizedBox(width: 15),
-              Text(title, style: const TextStyle(fontSize: 16)),
-              const Spacer(),
-              const Icon(Icons.arrow_forward_ios_rounded),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+
+                  children: [
+                    Text(
+                      title,
+
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                    const SizedBox(height: 5),
+
+                    Text(
+                      subtitle,
+
+                      style: const TextStyle(color: Colors.grey, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+
+              const Icon(Icons.arrow_forward_ios_rounded, size: 18),
             ],
           ),
         ),
