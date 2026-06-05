@@ -49,7 +49,7 @@ class _MonitorPageState extends State<MonitorPage> {
                   children: [
                     Icon(Icons.workspace_premium_rounded, color: Colors.white, size: 15),
                     SizedBox(width: 4),
-                    Text('PRO', style: TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+                    Text('PRO', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
                   ],
                 ),
               ),
@@ -59,7 +59,7 @@ class _MonitorPageState extends State<MonitorPage> {
             padding: const EdgeInsets.only(right: 18),
             child: GestureDetector(
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const Miniprofile())),
-              child: const CircleAvatar(backgroundColor: const Color.fromARGB(255, 44, 51, 106), child: Icon(Icons.person, color: Colors.white)),
+              child: const CircleAvatar(backgroundColor: Colors.green, child: Icon(Icons.person, color: Colors.white)),
             ),
           ),
         ],

@@ -1,3 +1,4 @@
+import 'package:ScamTap/widgets/scamTipOfTheDay.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:ScamTap/widgets/miniprofile.dart';
@@ -192,151 +193,155 @@ class _HomePageState extends State<HomePage> {
 
                 const SizedBox(height: 16),
 
+                ScamTipOfTheDay(),
+
+                const SizedBox(height: 16),
+
                 // LATEST SCAM ALERTS
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 25),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text("Latest Scam Alerts", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey.shade800)),
-                      TextButton(
-                        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => AllScamAlertsPage(records: records))),
-                        child: Text("See All", style: TextStyle(color: Colors.green.shade600, fontWeight: FontWeight.w500)),
-                      ),
-                    ],
-                  ),
-                ),
+                // Padding(
+                //   padding: const EdgeInsets.symmetric(horizontal: 25),
+                //   child: Row(
+                //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                //     children: [
+                //       Text("Latest Scam Alerts", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey.shade800)),
+                //       TextButton(
+                //         onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => AllScamAlertsPage(records: records))),
+                //         child: Text("See All", style: TextStyle(color: Colors.green.shade600, fontWeight: FontWeight.w500)),
+                //       ),
+                //     ],
+                //   ),
+                // ),
 
-                const SizedBox(height: 8),
+                // const SizedBox(height: 8),
 
-                if (snapshot.connectionState == ConnectionState.waiting)
-                  const Padding(padding: EdgeInsets.all(20), child: Center(child: CircularProgressIndicator()))
-                else if (latestScams.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
-                    child: Center(
-                      child: Text(
-                        "No scam records yet.\nStart scanning to see alerts here.",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
-                      ),
-                    ),
-                  )
-                else
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 25),
-                    child: Column(
-                      children: latestScams.map((record) {
-                        final aiAnalysis = record.detail['ai_analysis'] as Map<String, dynamic>? ?? {};
-                        final reason     = aiAnalysis['reason']     ?? 'No reason provided';
-                        final confidence = aiAnalysis['confidence'] ?? 'low';
+                // if (snapshot.connectionState == ConnectionState.waiting)
+                //   const Padding(padding: EdgeInsets.all(20), child: Center(child: CircularProgressIndicator()))
+                // else if (latestScams.isEmpty)
+                //   Padding(
+                //     padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
+                //     child: Center(
+                //       child: Text(
+                //         "No scam records yet.\nStart scanning to see alerts here.",
+                //         textAlign: TextAlign.center,
+                //         style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+                //       ),
+                //     ),
+                //   )
+                // else
+                //   Padding(
+                //     padding: const EdgeInsets.symmetric(horizontal: 25),
+                //     child: Column(
+                //       children: latestScams.map((record) {
+                //         final aiAnalysis = record.detail['ai_analysis'] as Map<String, dynamic>? ?? {};
+                //         final reason     = aiAnalysis['reason']     ?? 'No reason provided';
+                //         final confidence = aiAnalysis['confidence'] ?? 'low';
 
-                        final Color riskColor = record.riskLevel == 'Dangerous'
-                            ? Colors.red
-                            : record.riskLevel == 'Warning' ? Colors.orange : Colors.green;
+                //         final Color riskColor = record.riskLevel == 'Dangerous'
+                //             ? Colors.red
+                //             : record.riskLevel == 'Warning' ? Colors.orange : Colors.green;
 
-                        final IconData typeIcon = record.type == 'phone'
-                            ? Icons.phone
-                            : record.type == 'link' ? Icons.link : Icons.message;
+                //         final IconData typeIcon = record.type == 'phone'
+                //             ? Icons.phone
+                //             : record.type == 'link' ? Icons.link : Icons.message;
 
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: GestureDetector(
-                            onTap: () => Navigator.push(context, MaterialPageRoute(
-                              builder: (context) => ScamreportPage(result: record.rawData ?? {}, inputText: record.value),
-                            )),
-                            child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 2))],
-                                border: Border.all(color: riskColor.withOpacity(0.2)),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Expanded(
-                                        child: Row(children: [
-                                          Icon(typeIcon, size: 16, color: riskColor),
-                                          const SizedBox(width: 6),
-                                          Expanded(
-                                            child: Text(
-                                              record.value,
-                                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                                              overflow: TextOverflow.ellipsis,
-                                              maxLines: 1,
-                                            ),
-                                          ),
-                                        ]),
-                                      ),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        decoration: BoxDecoration(color: riskColor.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-                                        child: Text(record.riskLevel, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: riskColor)),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Icon(Icons.auto_awesome_rounded, size: 13, color: Colors.grey.shade500),
-                                      const SizedBox(width: 4),
-                                      Expanded(child: Text(reason, style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.4))),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                        decoration: BoxDecoration(
-                                          color: confidence == 'high' ? Colors.red.shade50 : Colors.orange.shade50,
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        child: Text("Confidence: $confidence", style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
-                                      ),
-                                      Text(
-                                        "${record.timestamp.day}/${record.timestamp.month}/${record.timestamp.year}",
-                                        style: TextStyle(fontSize: 11, color: Colors.grey.shade400),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
+                //         return Padding(
+                //           padding: const EdgeInsets.only(bottom: 12),
+                //           child: GestureDetector(
+                //             onTap: () => Navigator.push(context, MaterialPageRoute(
+                //               builder: (context) => ScamreportPage(result: record.rawData ?? {}, inputText: record.value),
+                //             )),
+                //             child: Container(
+                //               width: double.infinity,
+                //               padding: const EdgeInsets.all(16),
+                //               decoration: BoxDecoration(
+                //                 color: Colors.white,
+                //                 borderRadius: BorderRadius.circular(16),
+                //                 boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 2))],
+                //                 border: Border.all(color: riskColor.withOpacity(0.2)),
+                //               ),
+                //               child: Column(
+                //                 crossAxisAlignment: CrossAxisAlignment.start,
+                //                 children: [
+                //                   Row(
+                //                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                //                     children: [
+                //                       Expanded(
+                //                         child: Row(children: [
+                //                           Icon(typeIcon, size: 16, color: riskColor),
+                //                           const SizedBox(width: 6),
+                //                           Expanded(
+                //                             child: Text(
+                //                               record.value,
+                //                               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                //                               overflow: TextOverflow.ellipsis,
+                //                               maxLines: 1,
+                //                             ),
+                //                           ),
+                //                         ]),
+                //                       ),
+                //                       Container(
+                //                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                //                         decoration: BoxDecoration(color: riskColor.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                //                         child: Text(record.riskLevel, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: riskColor)),
+                //                       ),
+                //                     ],
+                //                   ),
+                //                   const SizedBox(height: 8),
+                //                   Row(
+                //                     crossAxisAlignment: CrossAxisAlignment.start,
+                //                     children: [
+                //                       Icon(Icons.auto_awesome_rounded, size: 13, color: Colors.grey.shade500),
+                //                       const SizedBox(width: 4),
+                //                       Expanded(child: Text(reason, style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.4))),
+                //                     ],
+                //                   ),
+                //                   const SizedBox(height: 8),
+                //                   Row(
+                //                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                //                     children: [
+                //                       Container(
+                //                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                //                         decoration: BoxDecoration(
+                //                           color: confidence == 'high' ? Colors.red.shade50 : Colors.orange.shade50,
+                //                           borderRadius: BorderRadius.circular(8),
+                //                         ),
+                //                         child: Text("Confidence: $confidence", style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
+                //                       ),
+                //                       Text(
+                //                         "${record.timestamp.day}/${record.timestamp.month}/${record.timestamp.year}",
+                //                         style: TextStyle(fontSize: 11, color: Colors.grey.shade400),
+                //                       ),
+                //                     ],
+                //                   ),
+                //                 ],
+                //               ),
+                //             ),
+                //           ),
+                //         );
+                //       }).toList(),
+                //     ),
+                //   ),
 
-                const SizedBox(height: 24),
+                // const SizedBox(height: 24),
 
                 // SCAM NEWS
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 25),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text("Latest Scam News", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey.shade800)),
-                      TextButton(
-                        onPressed: _launchNewsUrl,
-                        child: Text("More", style: TextStyle(color: Colors.green.shade600, fontWeight: FontWeight.w500)),
-                      ),
-                    ],
-                  ),
-                ),
+                // Padding(
+                //   padding: const EdgeInsets.symmetric(horizontal: 25),
+                //   child: Row(
+                //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                //     children: [
+                //       Text("Latest Scam News", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey.shade800)),
+                //       TextButton(
+                //         onPressed: _launchNewsUrl,
+                //         child: Text("More", style: TextStyle(color: Colors.green.shade600, fontWeight: FontWeight.w500)),
+                //       ),
+                //     ],
+                //   ),
+                // ),
 
-                const SizedBox(height: 8),
+                // const SizedBox(height: 8),
 
-                const NewsSection(),
+                // const NewsSection(),
               ],
             ),
           );
