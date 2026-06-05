@@ -23,6 +23,14 @@
           }
         },
         {
+          "client_id": "1010679459602-tbv0qfeqjha5qs8jlvled96m75thh1tf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.scam_tap",
+            "certificate_hash": "6261ae194bba9c68ef11a5ea01cfac0024a18e05"
+          }
+        },
+        {
           "client_id": "1010679459602-dehqbep24qq1rgtenqt0q7pg15slbuk1.apps.googleusercontent.com",
           "client_type": 3
         }
