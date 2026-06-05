@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/auth_service.dart';
 
 class PremiumPurchasePage extends StatefulWidget {
   const PremiumPurchasePage({super.key});
@@ -194,7 +195,10 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
               ),
               const SizedBox(height: 16),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.18),
                   borderRadius: BorderRadius.circular(30),
@@ -268,7 +272,7 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
                       color: _green.withOpacity(0.12),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
-                    )
+                    ),
                   ]
                 : [],
           ),
@@ -287,8 +291,11 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
                   ),
                 ),
                 child: selected
-                    ? const Icon(Icons.check_rounded,
-                        color: Colors.white, size: 13)
+                    ? const Icon(
+                        Icons.check_rounded,
+                        color: Colors.white,
+                        size: 13,
+                      )
                     : null,
               ),
               const SizedBox(width: 14),
@@ -347,7 +354,9 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
                     const SizedBox(height: 4),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: _accent,
                         borderRadius: BorderRadius.circular(6),
@@ -375,18 +384,36 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
   // ─── Features card ──────────────────────────────────────────────────────────
   Widget _buildFeaturesCard() {
     final features = [
-      (Icons.notifications_active_rounded, 'Real-time scam alerts',
-          'Get notified instantly for your area'),
-      (Icons.search_rounded, 'Unlimited number lookups',
-          'Check any number anytime'),
-      (Icons.smart_toy_rounded, 'AI message analysis',
-          'Paste any message for instant verdict'),
-      (Icons.bar_chart_rounded, 'Scam activity monitor',
-          'Live heatmap of scam activity near you'),
-      (Icons.block_rounded, 'Auto-block known scammers',
-          'Over 200,000 numbers flagged'),
-      (Icons.support_agent_rounded, 'Priority support',
-          'Get help when you need it most'),
+      (
+        Icons.notifications_active_rounded,
+        'Real-time scam alerts',
+        'Get notified instantly for your area',
+      ),
+      (
+        Icons.search_rounded,
+        'Unlimited number lookups',
+        'Check any number anytime',
+      ),
+      (
+        Icons.smart_toy_rounded,
+        'AI message analysis',
+        'Paste any message for instant verdict',
+      ),
+      (
+        Icons.bar_chart_rounded,
+        'Scam activity monitor',
+        'Live heatmap of scam activity near you',
+      ),
+      (
+        Icons.block_rounded,
+        'Auto-block known scammers',
+        'Over 200,000 numbers flagged',
+      ),
+      (
+        Icons.support_agent_rounded,
+        'Priority support',
+        'Get help when you need it most',
+      ),
     ];
 
     return Container(
@@ -583,7 +610,14 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
             width: double.infinity,
             height: 52,
             child: ElevatedButton(
-              onPressed: () => _showSuccessDialog(context),
+              onPressed: () async {
+                final authService = AuthService();
+
+                await authService.upgradeToPremium();
+
+                _showSuccessDialog(context);
+              },
+
               style: ElevatedButton.styleFrom(
                 backgroundColor: _green,
                 foregroundColor: Colors.white,
@@ -605,10 +639,7 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
           const SizedBox(height: 8),
           Text(
             '${plan.subtext} · Cancel anytime',
-            style: const TextStyle(
-              fontSize: 11.5,
-              color: _textSecondary,
-            ),
+            style: const TextStyle(fontSize: 11.5, color: _textSecondary),
             textAlign: TextAlign.center,
           ),
         ],

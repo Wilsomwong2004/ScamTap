@@ -23,26 +23,19 @@ class AuthService {
         idToken: googleAuth.idToken,
       );
 
-      final userCredential =
-          await _auth.signInWithCredential(credential);
-      
+      final userCredential = await _auth.signInWithCredential(credential);
+
       return AuthResult(
         success: true,
         message: 'Signed in successfully',
         uid: userCredential.user?.uid,
       );
     } catch (e) {
-      return AuthResult(
-        success: false,
-        message: 'Google sign-in failed: $e',
-      );
+      return AuthResult(success: false, message: 'Google sign-in failed: $e');
     }
   }
 
-  Future<AuthResult> signInWithEmail(
-    String email,
-    String password,
-  ) async {
+  Future<AuthResult> signInWithEmail(String email, String password) async {
     try {
       final userCredential = await _auth.signInWithEmailAndPassword(
         email: email.trim(),
@@ -55,15 +48,9 @@ class AuthService {
         uid: userCredential.user?.uid,
       );
     } on FirebaseAuthException catch (e) {
-      return AuthResult(
-        success: false,
-        message: e.message ?? 'Sign-in failed',
-      );
+      return AuthResult(success: false, message: e.message ?? 'Sign-in failed');
     } catch (e) {
-      return AuthResult(
-        success: false,
-        message: 'Sign-in failed: $e',
-      );
+      return AuthResult(success: false, message: 'Sign-in failed: $e');
     }
   }
 
@@ -73,8 +60,7 @@ class AuthService {
     required String password,
   }) async {
     try {
-      final userCredential =
-          await _auth.createUserWithEmailAndPassword(
+      final userCredential = await _auth.createUserWithEmailAndPassword(
         email: email.trim(),
         password: password,
       );
@@ -85,7 +71,7 @@ class AuthService {
         'Username': username.trim(),
         'Email': email.trim(),
         'Password': password,
-        'Role': 'user',
+        'Role': 'free user',
         'RegisterDate': DateTime.now(),
         'Profile Photo': '',
       });
@@ -101,10 +87,19 @@ class AuthService {
         message: e.message ?? 'Registration failed',
       );
     } catch (e) {
-      return AuthResult(
-        success: false,
-        message: 'Registration failed: $e',
-      );
+      return AuthResult(success: false, message: 'Registration failed: $e');
+    }
+  }
+
+  Future<void> upgradeToPremium() async {
+    try {
+      String uid = _auth.currentUser!.uid;
+
+      await _firestore.collection('usersData').doc(uid).update({
+        'Role': 'premium user',
+      });
+    } catch (e) {
+      print('Upgrade premium error: $e');
     }
   }
 
