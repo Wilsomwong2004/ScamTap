@@ -65,7 +65,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       ),
 
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
 
         child: Column(
           children: [

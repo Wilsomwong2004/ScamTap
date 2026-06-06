@@ -14,6 +14,7 @@ class _MiniprofileState extends State<Miniprofile> {
   String username = "";
   String email = "";
   String uid = "";
+  String userRole = "";
 
   @override
   void initState() {
@@ -60,6 +61,16 @@ class _MiniprofileState extends State<Miniprofile> {
       this.uid = uid;
       username = doc.data()?["Username"] ?? "User";
       email = doc.data()?["Email"] ?? "";
+
+      String role = (doc.data()?["Role"] ?? "free user")
+          .toString()
+          .toLowerCase();
+
+      if (role == "premium user") {
+        userRole = "Premium User";
+      } else {
+        userRole = "Free User";
+      }
     });
   }
 
@@ -106,12 +117,10 @@ class _MiniprofileState extends State<Miniprofile> {
 
             const SizedBox(height: 5),
 
-            const Text(
-              "ScamTap User",
-
-              style: TextStyle(color: Colors.grey, fontSize: 15),
+            Text(
+              "ScamTap $userRole",
+              style: const TextStyle(color: Colors.grey, fontSize: 15),
             ),
-
             Text(
               email,
               style: const TextStyle(color: Colors.grey, fontSize: 15),

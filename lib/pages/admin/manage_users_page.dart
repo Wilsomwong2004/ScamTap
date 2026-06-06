@@ -38,7 +38,7 @@ class ManageUsersPage extends StatelessWidget {
           }).toList();
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
 
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

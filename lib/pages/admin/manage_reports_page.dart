@@ -44,7 +44,7 @@ class ManageReportsPage extends StatelessWidget {
           var reports = snapshot.data!.docs;
 
           return ListView.builder(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
 
             itemCount: reports.length,
 

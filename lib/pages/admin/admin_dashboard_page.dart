@@ -70,7 +70,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       ),
 
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
 
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -209,7 +209,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               page: const ScanHistoryPage(),
             ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 10),
           ],
         ),
       ),
