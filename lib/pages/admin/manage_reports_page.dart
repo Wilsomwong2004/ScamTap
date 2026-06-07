@@ -58,6 +58,15 @@ class ManageReportsPage extends StatelessWidget {
               String description =
                   data['reportDescription'] ?? "No description";
 
+              String reportMessage =
+                  data['reportMessage'] ?? "No report message";
+
+              String reportedLink = data['reportedLink'] ?? "-";
+
+              String reportedNumber = data['reportedNumber'] ?? "-";
+
+              String reportBy = data['reportBy'] ?? "-";
+
               String status = data['reportStatus'] ?? "Pending";
 
               int riskLevel = 0;
@@ -173,12 +182,46 @@ class ManageReportsPage extends StatelessWidget {
                     // DESCRIPTION
                     Text(
                       description,
-
                       style: TextStyle(
                         color: Colors.grey.shade700,
                         fontSize: 15,
                         height: 1.4,
                       ),
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    const Text(
+                      "Report Message",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+
+                    const SizedBox(height: 5),
+
+                    Text(
+                      reportMessage,
+                      style: TextStyle(color: Colors.grey.shade700),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    Text(
+                      "Reported Link: $reportedLink",
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
+
+                    const SizedBox(height: 5),
+
+                    Text(
+                      "Reported Number: $reportedNumber",
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
+
+                    const SizedBox(height: 5),
+
+                    Text(
+                      "Reported By: $reportBy",
+                      style: const TextStyle(fontWeight: FontWeight.w500),
                     ),
 
                     const SizedBox(height: 18),
