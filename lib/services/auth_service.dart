@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../models/auth_result_model.dart';
+import 'package:ScamTap/services/premium_service.dart';
 
 class AuthService {
   final _auth = FirebaseAuth.instance;
@@ -74,6 +75,7 @@ class AuthService {
         'Role': 'free user',
         'RegisterDate': DateTime.now(),
         'Profile Photo': '',
+        'premiumExpiry': null, // Free users have no premium expiry
       });
 
       return AuthResult(
@@ -97,7 +99,12 @@ class AuthService {
 
       await _firestore.collection('usersData').doc(uid).update({
         'Role': 'premium user',
+        'premiumSince': FieldValue.serverTimestamp(),
+        'premiumExpiry': DateTime.now().add(const Duration(days: 365)),
       });
+
+      // Refresh premium cache
+      await PremiumService.refreshPremiumStatus();
     } catch (e) {
       print('Upgrade premium error: $e');
     }
@@ -105,6 +112,8 @@ class AuthService {
 
   Future<void> signOut() async {
     try {
+      await PremiumService.resetUserData();
+      
       await _auth.signOut();
       await GoogleSignIn().signOut();
     } catch (e) {

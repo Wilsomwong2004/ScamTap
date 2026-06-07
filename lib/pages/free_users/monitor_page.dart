@@ -6,6 +6,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../models/search_record_model.dart';
 import '../../services/firestore_service.dart';
 import '../../services/analytics_service.dart';
+import 'package:ScamTap/services/premium_service.dart';
+import 'package:ScamTap/pages/free_users/community_report_page.dart';
+import 'package:ScamTap/services/community_report_service.dart';
+import 'package:ScamTap/models/community_report_model.dart';
 
 class MonitorPage extends StatefulWidget {
   const MonitorPage({super.key});
@@ -17,6 +21,71 @@ class MonitorPage extends StatefulWidget {
 class _MonitorPageState extends State<MonitorPage> {
   String _selectedPeriod = '7 days';
   final _analyticsService = AnalyticsService();
+  bool _isPremium = false;
+  bool _showAllReports = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPremiumStatus();
+  }
+
+  Future<void> _loadPremiumStatus() async {
+    final isPremium = await PremiumService.isPremium();
+    setState(() {
+      _isPremium = isPremium;
+    });
+  }
+
+  void _showPremiumDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Premium Feature'),
+        content: const Text('Community reports are only available for Premium users. Upgrade now!'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Maybe Later'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const PremiumPurchasePage()),
+              );
+            },
+            child: const Text('Upgrade Now'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  int _getDaysFromPeriod(String period) {
+    switch (period) {
+      case '7 days':
+        return 7;
+      case '30 days':
+        return 30;
+      case '90 days':
+        return 90;
+      case '1 year':
+        return 365;
+      default:
+        return 7;
+    }
+  }
+
+  List<Map<String, dynamic>> _buildChartData(List<SearchRecordModel> records) {
+    return _analyticsService.buildChartData(records, _selectedPeriod);
+  }
+
+  String _dayLabel(int weekday) {
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return days[weekday - 1];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,12 +113,24 @@ class _MonitorPageState extends State<MonitorPage> {
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [BoxShadow(color: const Color(0xFFFFC940).withOpacity(0.4), blurRadius: 8, offset: const Offset(0, 2))],
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.workspace_premium_rounded, color: Colors.white, size: 15),
-                    SizedBox(width: 4),
-                    Text('PRO', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+                    Icon(
+                      Icons.workspace_premium_rounded,
+                      color: Colors.white,
+                      size: 15,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      _isPremium ? 'PREMIUM' : 'PRO',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -72,10 +153,11 @@ class _MonitorPageState extends State<MonitorPage> {
           }
 
           final allRecords = snapshot.data ?? [];
-          final cutoff = DateTime.now().subtract(Duration(days: 7));
+          
+          final daysBack = _getDaysFromPeriod(_selectedPeriod);
+          final cutoff = DateTime.now().subtract(Duration(days: daysBack));
           final records = allRecords.where((r) => r.timestamp.isAfter(cutoff)).toList();
 
-          // STATS
           final totalScans = records.length;
           final totalScams = records.where((r) {
             final detail = r.detail;
@@ -88,17 +170,40 @@ class _MonitorPageState extends State<MonitorPage> {
           final dangerous = records.where((r) => r.riskLevel == 'Dangerous').length;
           final warning = records.where((r) => r.riskLevel == 'Warning').length;
 
-          // CHART DATA
           final chartData = _buildChartData(records);
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20,120,20,120),
+            padding: const EdgeInsets.fromLTRB(20, 120, 20, 120),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // CHART
-                Text("Scam Activity",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey.shade800),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("Scam Activity",
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey.shade800),
+                    ),
+                    if (!_isPremium)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade100,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.lock, size: 12, color: Colors.orange.shade700),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Upgrade for more',
+                              style: TextStyle(fontSize: 10, color: Colors.orange.shade700, fontWeight: FontWeight.w500),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 Container(
@@ -112,36 +217,42 @@ class _MonitorPageState extends State<MonitorPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // PERIOD SELECTOR beside title
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text("Last 7 days",
+                          Text(
+                            _selectedPeriod,
                             style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
                           ),
-                          // Container(
-                          //   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                          //   decoration: BoxDecoration(
-                          //     color: Colors.grey.shade100,
-                          //     borderRadius: BorderRadius.circular(20),
-                          //   ),
-                          //   child: DropdownButton<String>(
-                          //     value: _selectedPeriod,
-                          //     underline: const SizedBox(),
-                          //     isDense: true,
-                          //     icon: const Icon(Icons.arrow_drop_down, size: 18),
-                          //     items: ['7 days', '30 days', '90 days', '1 year'].map((p) {
-                          //       return DropdownMenuItem(value: p, child: Text(p, style: const TextStyle(fontSize: 13)));
-                          //     }).toList(),
-                          //     onChanged: (val) => setState(() => _selectedPeriod = val!),
-                          //   ),
-                          // ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: DropdownButton<String>(
+                              value: _selectedPeriod,
+                              underline: const SizedBox(),
+                              isDense: true,
+                              icon: const Icon(Icons.arrow_drop_down, size: 18),
+                              items: ['7 days', '30 days', '90 days', '1 year'].map((p) {
+                                return DropdownMenuItem(value: p, child: Text(p, style: const TextStyle(fontSize: 13)));
+                              }).toList(),
+                              onChanged: (val) async {
+                                if (val == '30 days' || val == '90 days' || val == '1 year') {
+                                  final isPremium = await PremiumService.isPremium();
+                                  if (!isPremium) {
+                                    _showPremiumDialog(context);
+                                    return;
+                                  }
+                                }
+                                setState(() => _selectedPeriod = val!);
+                              },
+                            ),
+                          ),
                         ],
                       ),
-
                       const SizedBox(height: 16),
-
-                      // BAR CHART
                       SizedBox(
                         height: 160,
                         child: Row(
@@ -156,10 +267,7 @@ class _MonitorPageState extends State<MonitorPage> {
                           }).toList(),
                         ),
                       ),
-
                       const SizedBox(height: 16),
-
-                      // LEGEND BELOW CHART
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -176,7 +284,7 @@ class _MonitorPageState extends State<MonitorPage> {
 
                 const SizedBox(height: 24),
 
-                 // SUMMARY CARDS
+                // SUMMARY CARDS
                 Row(
                   children: [
                     _summaryCard("Total Scans", totalScans.toString(), Colors.blue, Icons.search),
@@ -188,6 +296,12 @@ class _MonitorPageState extends State<MonitorPage> {
                 ),
 
                 const SizedBox(height: 24),
+
+                // COMMUNITY REPORTS SECTION - PREMIUM ONLY (GOLD BOX)
+                if (_isPremium) ...[
+                  _buildCommunityReportSection(),
+                  const SizedBox(height: 24),
+                ],
 
                 // INSIGHTS
                 Row(
@@ -257,31 +371,240 @@ class _MonitorPageState extends State<MonitorPage> {
     );
   }
 
-  List<Map<String, dynamic>> _buildChartData(List<SearchRecordModel> records) {
-    return _analyticsService.buildChartData(records, _selectedPeriod);
-  }
-
-  String _dayLabel(int weekday) {
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    return days[weekday - 1];
-  }
-
-  Widget _summaryCard(String label, String value, Color color, IconData icon) {
-    return Expanded(
+  Widget _buildCommunityReportSection() {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const CommunityReportPage()),
+        );
+      },
       child: Container(
-        padding: const EdgeInsets.all(14),
+        width: double.infinity,
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.3)),
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.amber.withOpacity(0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: color, size: 22),
-            const SizedBox(height: 8),
-            Text(value, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: color)),
-            Text(label, style: TextStyle(fontSize: 11, color: color.withOpacity(0.8))),
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.people_alt, color: Colors.white, size: 24),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Community Reports',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'See what others are reporting',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.8),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Row(
+                      children: [
+                        Text(
+                          'PREMIUM',
+                          style: TextStyle(
+                            color: Colors.amber,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(width: 4),
+                        Icon(Icons.star, color: Colors.amber, size: 12),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Divider
+            Container(height: 1, color: Colors.white.withOpacity(0.3)),
+            
+            // Content - Show top 3 reports
+            StreamBuilder<List<CommunityReport>>(
+              stream: CommunityReportService().getApprovedReports(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Padding(
+                    padding: EdgeInsets.all(32),
+                    child: Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    ),
+                  );
+                }
+                
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Center(
+                      child: Column(
+                        children: [
+                          Icon(Icons.report_off, color: Colors.white.withOpacity(0.7), size: 40),
+                          const SizedBox(height: 8),
+                          Text(
+                            'No reports yet',
+                            style: TextStyle(color: Colors.white.withOpacity(0.9)),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Be the first to report a scam!',
+                            style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+                
+                final reports = snapshot.data!;
+                
+                return Column(
+                  children: [
+                    ...reports.map((report) => _buildCommunityReportItem(report)),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            'Tap to view all reports',
+                            style: TextStyle(color: Colors.white, fontSize: 12),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(Icons.arrow_forward, color: Colors.white, size: 14),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCommunityReportItem(CommunityReport report) {
+    IconData typeIcon;
+    switch (report.type) {
+      case 'phone':
+        typeIcon = Icons.phone;
+        break;
+      case 'link':
+        typeIcon = Icons.link;
+        break;
+      default:
+        typeIcon = Icons.message;
+    }
+    
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const CommunityReportPage()),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(color: Colors.white.withOpacity(0.1)),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(typeIcon, color: Colors.white, size: 16),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    report.value,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${report.reportCount} report${report.reportCount > 1 ? 's' : ''}',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                report.reportType.toUpperCase(),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -326,6 +649,28 @@ class _MonitorPageState extends State<MonitorPage> {
         const SizedBox(height: 8),
         Text(day, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
       ],
+    );
+  }
+
+  Widget _summaryCard(String label, String value, Color color, IconData icon) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: color, size: 22),
+            const SizedBox(height: 8),
+            Text(value, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: color)),
+            Text(label, style: TextStyle(fontSize: 11, color: color.withOpacity(0.8))),
+          ],
+        ),
+      ),
     );
   }
 

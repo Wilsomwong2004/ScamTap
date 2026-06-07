@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../../services/auth_service.dart';
+import 'package:ScamTap/services/premium_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -258,6 +259,7 @@ class _LoginPageState extends State<LoginPage> {
                                 (route) => false,
                               );
                             } else {
+                              await PremiumService.refreshPremiumStatus();
                               Navigator.pushAndRemoveUntil(
                                 context,
                                 MaterialPageRoute(builder: (context) => const Navibar()),

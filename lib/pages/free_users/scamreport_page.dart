@@ -5,6 +5,8 @@ import 'package:ScamTap/services/report_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:ScamTap/services/premium_service.dart';
+import 'package:ScamTap/pages/free_users/premium_purchase_page.dart';
 
 class ScamreportPage extends StatefulWidget {
   const ScamreportPage({super.key, this.result, this.inputText = ''});
@@ -17,14 +19,43 @@ class ScamreportPage extends StatefulWidget {
 }
 
 class _ScamreportPageState extends State<ScamreportPage> {
+  bool _isPremium = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkPremium();
+    
+    // Debug print to see if AI advice exists
+    Future.delayed(Duration.zero, () {
+      print('=== SCAMREPORT PAGE DEBUG ===');
+      print('Result: ${widget.result}');
+      print('AI Analysis: ${widget.result?['ai_analysis']}');
+      print('AI Advice: ${widget.result?['ai_analysis']?['advice']}');
+    });
+  }
+
+  Future<void> _checkPremium() async {
+    final isPremium = await PremiumService.isPremium();
+    setState(() {
+      _isPremium = isPremium;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final Map<String, dynamic> detail =  Map<String, dynamic>.from(widget.result?['detail'] ?? widget.result ?? {});
+    final Map<String, dynamic> detail = Map<String, dynamic>.from(widget.result?['detail'] ?? widget.result ?? {});
     final bool isScam = widget.result?['is_scam'] ?? detail['is_scam'] ?? false;
     final double riskScore = (widget.result?['risk_score'] as num?)?.toDouble() ?? (widget.result?['riskScore'] as num?)?.toDouble() ?? 0;
     final String verdict = widget.result?['verdict'] ?? detail['verdict'] ?? 'UNKNOWN';
-    final String type = widget.result?['type'] ?? 'unknown';
-    final String reason = widget.result?['ai_analysis']?['reason'] ?? detail['ai_analysis']?['reason'] ?? 'No reason provided';
+    final String type =
+    widget.result?['type'] ??
+    detail['type'] ??
+    'unknown';
+    final String aiAdvice =
+    widget.result?['ai_analysis']?['advice'] ??
+    detail['ai_analysis']?['advice'] ??
+    '';
     final String confidence = widget.result?['ai_analysis']?['confidence'] ?? detail['ai_analysis']?['confidence'] ?? 'low';
     final int policeCount = widget.result?['penipumy']?['police_report_count'] ?? detail['penipumy']?['police_report_count'] ?? 0;
     final bool isFraud = widget.result?['penipumy']?['fraud'] ?? detail['penipumy']?['fraud'] ?? false;
@@ -34,7 +65,6 @@ class _ScamreportPageState extends State<ScamreportPage> {
 
     return Scaffold(
       appBar: AppBar(
-        // backgroundColor: Colors.transparent,
         elevation: 0,
         title: Padding(
           padding: EdgeInsets.only(left: 0),
@@ -47,7 +77,6 @@ class _ScamreportPageState extends State<ScamreportPage> {
             ),
           ),
         ),
-
         actions: [
           Padding(
             padding: EdgeInsets.only(right: 18),
@@ -66,7 +95,6 @@ class _ScamreportPageState extends State<ScamreportPage> {
           ),
         ],
       ),
-
       body: Column(
         children: [
           Expanded(
@@ -77,10 +105,10 @@ class _ScamreportPageState extends State<ScamreportPage> {
                 children: [
                   const SizedBox(height: 20),
 
+                  // Risk Score and Status
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-            
                       Container(
                         width: 140,
                         height: 120,
@@ -89,9 +117,7 @@ class _ScamreportPageState extends State<ScamreportPage> {
                         ),
                         child: Scoregauge(score: riskScore),
                       ),
-
                       const SizedBox(width: 25),
-
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,22 +127,17 @@ class _ScamreportPageState extends State<ScamreportPage> {
                                 Icon(isScam ? Icons.warning_amber_rounded : Icons.check_circle_outline,
                                     color: Colors.black, size: 20),
                                 const SizedBox(width: 8),
-                                const Text(
-                                  "Scam Detected",
+                                Text(
+                                  isScam ? "Scam Detected" : "Looks Safe",
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
+                                    color: isScam ? Colors.red : Colors.green,
                                   ),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 10),
-                            Text(
-                              isScam ? "Scam Detected" : "Looks Safe",
-                              style: const TextStyle(
-                                  fontSize: 13, fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 6),
                             Text(
                               isScam ? "High risk! Do not interact!" : "No threats detected",
                               style: const TextStyle(fontSize: 13),
@@ -127,8 +148,145 @@ class _ScamreportPageState extends State<ScamreportPage> {
                     ],
                   ),
 
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 20),
 
+                  // AI ADVICE SECTION - REMOVED PREMIUM CHECK FOR TESTING
+                  // This will show for ALL users so you can test
+                  if (aiAdvice.isNotEmpty) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Color.fromARGB(255, 249, 202, 246),
+                            Color.fromARGB(255, 208, 199, 247),
+                            Color.fromRGBO(227, 222, 251, 1),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.5),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(
+                                    Icons.auto_awesome_rounded,
+                                    size: 16,
+                                    color: Colors.purple,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  "AI Safety Advice",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.purple,
+                                  ),
+                                ),
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.amber,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    _isPremium ? 'PREMIUM' : 'TEST MODE',
+                                    style: const TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              aiAdvice,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Colors.black87,
+                                height: 1.5,
+                              ),
+                            ),
+                            if (confidence.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  const Icon(Icons.trending_up, size: 12, color: Colors.grey),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Confidence: ${confidence.toUpperCase()}',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: confidence == 'high' ? Colors.green : confidence == 'medium' ? Colors.orange : Colors.grey,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ] else ...[
+                    // Show message if no AI advice
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.info_outline, size: 16, color: Colors.grey),
+                              const SizedBox(width: 8),
+                              const Text(
+                                "AI Advice Status",
+                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'No AI advice generated. Check console for debug info.',
+                            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // Phone Details (for phone numbers)
                   if (type == 'phone' && numverify.isNotEmpty) ...[
                     Container(
                       width: double.infinity,
@@ -154,13 +312,14 @@ class _ScamreportPageState extends State<ScamreportPage> {
                           _PhoneDetailRow(label: 'Country',  value: numverify['country_name']         ?? '-'),
                           _PhoneDetailRow(label: 'Carrier',  value: numverify['carrier']              ?? '-'),
                           _PhoneDetailRow(label: 'Line Type',value: numverify['line_type']            ?? '-'),
-                          _PhoneDetailRow(label: 'Valid',    value: numverify['valid'] == true ? '✓ Yes' : '✗ No'),
+                          _PhoneDetailRow(label: 'Valid',    value: numverify['valid'] == true ? 'Yes' : 'No'),
                         ],
                       ),
                     ),
                     const SizedBox(height: 16),
                   ],
 
+                  // Message Content (for messages)
                   if (type == 'message') ...[
                     Container(
                       width: double.infinity,
@@ -194,85 +353,42 @@ class _ScamreportPageState extends State<ScamreportPage> {
                     const SizedBox(height: 12),
                   ],
 
-                  // Container(
-                  //   width: double.infinity,
-                  //   height: 140,
-                  //   decoration: BoxDecoration(
-                  //     gradient: LinearGradient(
-                  //     begin: Alignment.topLeft,
-                  //     end: Alignment.bottomRight,
-                  //     colors: [
-                  //       Color.fromARGB(255, 249, 202, 246),
-                  //       Color.fromARGB(255, 208, 199, 247),
-                  //       Color.fromRGBO(227, 222, 251, 1),
-                  //     ],
-                  //   ),
-                  //     borderRadius: BorderRadius.circular(20),
-                  //   ),
-                  //   alignment: Alignment.center,
-                  //   child: Padding(
-                  //     padding: const EdgeInsets.all(20.0),
-                  //     child: Column(
-                  //       children: [
-                  //         Row(
-                  //           children: [
-                  //             Icon(Icons.auto_awesome_rounded, size: 16, color: Colors.grey[800], fontWeight: FontWeight.bold,),
-                  //             const SizedBox(width: 8),
-                  //             Text(
-                  //               "AI analysis:",
-                  //               style: TextStyle(fontSize: 12, color: Colors.grey[800], fontWeight: FontWeight.w500),
-                  //             ),
-
-                  //             const SizedBox(height: 10),
-                  //           ],
-                  //         ),
-
-                  //         const SizedBox(height: 10),
-
-                  //         Text(
-                  //           reason,
-                  //           style: TextStyle(fontSize: 12, color: Colors.grey[800]),
-                  //         ),
-                  //       ],
-                  //     ),
-                  //   ),
-                  // ),
-   
                   const SizedBox(height: 24),
 
+                  // Evidence Items
                   if (type == 'phone') ...[
-                  _EvidenceItem(
-                    icon: Icons.phone_disabled_rounded,
-                    label: "Fraud Reported",
-                    subtitle: isFraud ? "Confirmed" : "Not reported",
-                    count: policeCount,
-                  ),
-                  const SizedBox(height: 16),
-                  _EvidenceItem(
-                    icon: Icons.gavel_rounded,
-                    label: "Police Reports",
-                    count: policeCount,
-                  ),
-                ] else if (type == 'link') ...[
-                  _EvidenceItem(
-                    icon: Icons.dangerous_rounded,
-                    label: "Malicious Engines",
-                    count: malicious,
-                  ),
-                  const SizedBox(height: 16),
-                  _EvidenceItem(
-                    icon: Icons.warning_amber_rounded,
-                    label: "Suspicious Engines",
-                    count: widget.result?['virustotal']?['suspicious'] ?? 0,
-                  ),
-                ] else if (type == 'message') ...[
-                  _EvidenceItem(
-                    icon: Icons.security,
-                    label: "Spam Score",
-                    subtitle: "${(spamScore * 100).toStringAsFixed(0)}%",
-                    count: (spamScore * 100).toInt(),
-                  ),
-                ],
+                    _EvidenceItem(
+                      icon: Icons.phone_disabled_rounded,
+                      label: "Fraud Reported",
+                      subtitle: isFraud ? "Confirmed" : "Not reported",
+                      count: policeCount,
+                    ),
+                    const SizedBox(height: 16),
+                    _EvidenceItem(
+                      icon: Icons.gavel_rounded,
+                      label: "Police Reports",
+                      count: policeCount,
+                    ),
+                  ] else if (type == 'link') ...[
+                    _EvidenceItem(
+                      icon: Icons.dangerous_rounded,
+                      label: "Malicious Engines",
+                      count: malicious,
+                    ),
+                    const SizedBox(height: 16),
+                    _EvidenceItem(
+                      icon: Icons.warning_amber_rounded,
+                      label: "Suspicious Engines",
+                      count: widget.result?['virustotal']?['suspicious'] ?? 0,
+                    ),
+                  ] else if (type == 'message') ...[
+                    _EvidenceItem(
+                      icon: Icons.security,
+                      label: "Spam Score",
+                      subtitle: "${(spamScore * 100).toStringAsFixed(0)}%",
+                      count: (spamScore * 100).toInt(),
+                    ),
+                  ],
 
                   const SizedBox(height: 32),
                 ],
@@ -280,6 +396,7 @@ class _ScamreportPageState extends State<ScamreportPage> {
             ),
           ),
 
+          // Bottom Buttons
           Container(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
             child: Column(
@@ -293,7 +410,6 @@ class _ScamreportPageState extends State<ScamreportPage> {
                           showDialog(
                             context: context,
                             builder: (BuildContext dialogContext) {
-
                               return Dialog(
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                 child: Padding(
@@ -340,7 +456,7 @@ class _ScamreportPageState extends State<ScamreportPage> {
                                                   result    : widget.result,
                                                   riskScore : riskScore,
                                                   verdict   : verdict,
-                                                  reason    : reason,
+                                                  reason    : aiAdvice.isNotEmpty ? aiAdvice : 'No reason provided',
                                                 );
                                                 if (mounted) {
                                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -374,14 +490,11 @@ class _ScamreportPageState extends State<ScamreportPage> {
                             },
                           );
                         },
-                        icon: const Icon(Icons.report_gmailerrorred_outlined,
-                            size: 18),
+                        icon: const Icon(Icons.report_gmailerrorred_outlined, size: 18),
                         label: const Text("Report"),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                           side: BorderSide(color: Colors.grey[400]!),
                           foregroundColor: Colors.white,
                           backgroundColor: const Color.fromARGB(255, 225, 79, 76),
@@ -393,36 +506,30 @@ class _ScamreportPageState extends State<ScamreportPage> {
                       child: OutlinedButton.icon(
                         onPressed: () {
                           SharePlus.instance.share(
-                            ShareParams(text: 'Risk Score: $riskScore/100\nVerdict: $verdict\nReason: $reason')
+                            ShareParams(text: 'Risk Score: $riskScore/100\nVerdict: $verdict\n\n${aiAdvice.isNotEmpty ? "AI Advice: $aiAdvice" : ""}')
                           );
                         },
                         icon: const Icon(Icons.share_outlined, size: 18),
                         label: const Text("Share"),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                           side: BorderSide(color: Colors.grey[400]!),
                           foregroundColor: Colors.white,
-                          backgroundColor: Color.fromARGB(255, 82, 152, 208),
+                          backgroundColor: const Color.fromARGB(255, 82, 152, 208),
                         ),
                       ),
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 10),
-
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                       side: BorderSide(color: Colors.grey[400]!),
                       foregroundColor: Colors.white,
                       backgroundColor: const Color.fromARGB(255, 80, 185, 83),
@@ -433,8 +540,6 @@ class _ScamreportPageState extends State<ScamreportPage> {
                     ),
                   ),
                 ),
-
-                const SizedBox(height: 10),
               ],
             ),
           ),
@@ -443,7 +548,6 @@ class _ScamreportPageState extends State<ScamreportPage> {
     );
   }
 }
-
 
 class _EvidenceItem extends StatelessWidget {
   final String label;

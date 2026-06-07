@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:ScamTap/pages/free_users/premium_purchase_page.dart';
+import 'package:ScamTap/pages/free_users/bulk_scan_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ScamTap/models/search_record_model.dart';
 import 'package:ScamTap/pages/free_users/scamreport_page.dart';
@@ -8,8 +9,8 @@ import 'package:ScamTap/services/cache_service.dart';
 import 'package:flutter/material.dart';
 import 'package:ScamTap/widgets/animatedhinttextfield.dart';
 import 'package:ScamTap/widgets/miniprofile.dart';
-import 'package:ScamTap/widgets/scoregauge.dart';
 import 'package:ScamTap/pages/free_users/scanning_page.dart';
+import 'package:ScamTap/services/premium_service.dart';
 
 import '../../widgets/scamdetectedcolorcontainer.dart';
 
@@ -26,11 +27,26 @@ class _LookupPageState extends State<LookupPage> {
   bool _isInitialized = false;
   String _selectedFilter = 'Call';
   final _cacheService = CacheService();
+  bool _isPremium = false;
+  int _remainingScans = 0;
+  
+  final TextEditingController _inputController = TextEditingController();
+  String _currentInputType = 'Call';
 
   @override
   void initState() {
     super.initState();
     _loadLastResult();
+    _loadPremiumStatus();
+  }
+
+  Future<void> _loadPremiumStatus() async {
+    final isPremium = await PremiumService.isPremium();
+    final remaining = await PremiumService.getRemainingScans();
+    setState(() {
+      _isPremium = isPremium;
+      _remainingScans = remaining;
+    });
   }
 
   Future<void> _loadLastResult() async {
@@ -41,7 +57,6 @@ class _LookupPageState extends State<LookupPage> {
         _showResult = true;
       });
     }
-
     setState(() {
       _isInitialized = true;
     });
@@ -51,6 +66,63 @@ class _LookupPageState extends State<LookupPage> {
     await _cacheService.saveResult('last_result_lookup', data);
   }
 
+  void _showPremiumLimitDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Daily Limit Reached'),
+        content: const Text('You have used your 5 free scans today. Upgrade to Premium for unlimited scans.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Maybe Later'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const PremiumPurchasePage()),
+              );
+            },
+            child: const Text('Upgrade Now'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _checkAndStartScan(String inputText, String inputType) async {
+    if (inputText.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a number or link to scan')),
+      );
+      return;
+    }
+    
+    final isPremium = await PremiumService.isPremium();
+    final remaining = await PremiumService.getRemainingScans();
+    
+    if (!isPremium && remaining <= 0) {
+      _showPremiumLimitDialog();
+      return;
+    }
+    
+    await PremiumService.incrementScanCount();
+    
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ScanningPage(
+          inputText: inputText,
+          inputType: inputType,
+        ),
+      ),
+    );
+    
+    await _loadPremiumStatus();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -58,11 +130,46 @@ class _LookupPageState extends State<LookupPage> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
-        title: const Padding(
-          padding: EdgeInsets.only(left: 8),
-          child: Text("Lookup", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Colors.white)),
+        title: Row(
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(left: 8),
+              child: Text(
+                "Lookup",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Colors.white),
+              ),
+            ),
+            if (_isPremium)
+              Container(
+                margin: const EdgeInsets.only(left: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(color: Colors.amber, borderRadius: BorderRadius.circular(12)),
+                child: const Text('PREMIUM', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white)),
+              ),
+          ],
         ),
         actions: [
+          if (_isPremium)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const BulkScanPage()));
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(20)),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.queue, color: Colors.white, size: 14),
+                      SizedBox(width: 4),
+                      Text('Bulk', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: GestureDetector(
@@ -70,20 +177,15 @@ class _LookupPageState extends State<LookupPage> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFFFC940), Color(0xFFFF9500)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  gradient: const LinearGradient(colors: [Color(0xFFFFC940), Color(0xFFFF9500)]),
                   borderRadius: BorderRadius.circular(20),
-                  boxShadow: [BoxShadow(color: const Color(0xFFFFC940).withOpacity(0.4), blurRadius: 8, offset: const Offset(0, 2))],
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.workspace_premium_rounded, color: Colors.white, size: 15),
-                    SizedBox(width: 4),
-                    Text('PRO', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+                    const Icon(Icons.workspace_premium_rounded, color: Colors.white, size: 15),
+                    const SizedBox(width: 4),
+                    Text(_isPremium ? 'PREMIUM' : 'PRO', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
                   ],
                 ),
               ),
@@ -98,17 +200,11 @@ class _LookupPageState extends State<LookupPage> {
           ),
         ],
       ),
-
       body: Container(
         width: double.infinity,
         height: double.infinity,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.green, const Color.fromARGB(255, 199, 199, 199)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            stops: [0.0, 1.0],
-          ),
+          gradient: LinearGradient(colors: [Colors.green, const Color.fromARGB(255, 199, 199, 199)], begin: Alignment.topCenter, end: Alignment.bottomCenter),
         ),
         child: SingleChildScrollView(
           padding: EdgeInsets.only(top: kToolbarHeight + 55, bottom: 100),
@@ -118,81 +214,156 @@ class _LookupPageState extends State<LookupPage> {
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      "Verify Number / Link",
-                      style: TextStyle(
-                        fontSize: 15,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    SizedBox(height: 10),
+                    const Text("Verify Number / Link", style: TextStyle(fontSize: 15, color: Colors.white, fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 10),
                     AnimatedHintTextField(
-                      onResultRecieved:
-                          (bool hasResult, Map<String, dynamic>? data) async {
-                            if (hasResult && data != null) {
-                              await _saveResult(data);
-                            }
-                            setState(() {
-                              _showResult = hasResult;
-                              _resultData = data;
-                            });
-                          },
+                      controller: _inputController,
+                      onRefreshRequired: () {
+                        _loadPremiumStatus();
+                      },
+                      onResultRecieved: (bool hasResult, Map<String, dynamic>? data) async {
+                        if (hasResult && data != null) await _saveResult(data);
+                        setState(() {
+                          _showResult = hasResult;
+                          _resultData = data;
+                        });
+                      },
                     ),
+                    
+                    if (!_isPremium) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: _remainingScans <= 0 ? Colors.red.shade100 : Colors.white.withOpacity(0.9),
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Scans remaining today',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: _remainingScans <= 0 ? Colors.red.shade800 : Colors.grey.shade700,
+                              ),
+                            ),
+                            Text(
+                              '$_remainingScans',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: _remainingScans <= 0 ? Colors.red.shade800 : Colors.green.shade700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (_remainingScans <= 0) ...[
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade100,
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.warning, color: Colors.red, size: 16),
+                              const SizedBox(width: 8),
+                              const Expanded(
+                                child: Text(
+                                  'You have reached your daily limit',
+                                  style: TextStyle(fontSize: 12, color: Colors.red),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.push(context, MaterialPageRoute(builder: (context) => const PremiumPurchasePage()));
+                                },
+                                child: const Text('Upgrade', style: TextStyle(fontSize: 12)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                    
+                    if (_isPremium) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.9),
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Premium Plan',
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.green),
+                            ),
+                            Text(
+                              'Unlimited Scans',
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    
+                    const SizedBox(height: 15),
+                    
+                    if (_isPremium) ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const BulkScanPage())),
+                          icon: const Icon(Icons.queue),
+                          label: const Text('Bulk Scan (Phone Numbers and Links)'),
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: Colors.white.withOpacity(0.9),
+                            foregroundColor: Colors.green.shade700,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
-
-
-              SizedBox(height: 15),
-
+              const SizedBox(height: 15),
               AnimatedSwitcher(
-                duration: Duration(milliseconds: 400),
+                duration: const Duration(milliseconds: 400),
                 child: !_isInitialized
-                    ? SizedBox.shrink(key: ValueKey('loading'))
+                    ? const SizedBox.shrink(key: ValueKey('loading'))
                     : _showResult
-                        ? ScamDetectedColorContainer(
-                            key: ValueKey('result'),
-                            result: _resultData,
-                          )
-                        : SizedBox.shrink(key: ValueKey('empty')),
+                        ? ScamDetectedColorContainer(key: const ValueKey('result'), result: _resultData)
+                        : const SizedBox.shrink(key: ValueKey('empty')),
               ),
-
-              SizedBox( height: _showResult ? 25 : 10,),
-
+              SizedBox(height: _showResult ? 25 : 10),
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: SizedBox(
                   width: double.infinity,
-                  child: Text(
-                    "Recent Lookup",
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: const Color.fromARGB(255, 255, 255, 255),
-                    ),
-                  ),
+                  child: const Text("Recent Lookup", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.white)),
                 ),
               ),
-
-              SizedBox(height: 10),
-
+              const SizedBox(height: 10),
               Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 0,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: FilterSelection(
                   selected: _selectedFilter,
-                  onChanged: (val) => setState(() => _selectedFilter = val),
+                  onChanged: (val) => setState(() {
+                    _selectedFilter = val;
+                    _currentInputType = val;
+                  }),
                 ),
               ),
-
-              SizedBox(height: 10),
-
+              const SizedBox(height: 10),
               StreamBuilder<List<SearchRecordModel>>(
                 stream: FirestoreService().getSearchHistory(),
                 builder: (context, snapshot) {
@@ -204,24 +375,18 @@ class _LookupPageState extends State<LookupPage> {
                   }).toList();
 
                   if (snapshot.connectionState == ConnectionState.waiting && allRecords.isEmpty) {
-                    return const SizedBox(
-                      height: 60,
-                      child: Center(child: CircularProgressIndicator(color: Colors.white)),
-                    );
+                    return const SizedBox(height: 60, child: Center(child: CircularProgressIndicator(color: Colors.white)));
                   }
 
                   if (records.isEmpty) {
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
                       child: Column(
-                        mainAxisSize: MainAxisSize.min,
                         children: [
                           const Icon(Icons.search_off_rounded, color: Colors.white70, size: 30),
                           const SizedBox(height: 5),
                           Text(
-                            allRecords.isEmpty
-                                ? "No record found!"
-                                : "No ${_selectedFilter == 'Call' ? 'phone' : 'link'} records found!",
+                            allRecords.isEmpty ? "No record found" : "No ${_selectedFilter == 'Call' ? 'phone' : 'link'} records found",
                             style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
                           ),
                         ],
@@ -238,17 +403,7 @@ class _LookupPageState extends State<LookupPage> {
                           borderRadius: BorderRadius.circular(25),
                           child: InkWell(
                             borderRadius: BorderRadius.circular(25),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ScamreportPage(
-                                    result: record.rawData ?? {},
-                                    inputText: record.value,
-                                  ),
-                                ),
-                              );
-                            },
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ScamreportPage(result: record.rawData ?? {}, inputText: record.value))),
                             child: Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                               child: Row(
@@ -258,10 +413,7 @@ class _LookupPageState extends State<LookupPage> {
                                     children: [
                                       CircleAvatar(
                                         backgroundColor: const Color.fromARGB(255, 44, 106, 46),
-                                        child: Icon(
-                                          record.type == 'phone' ? Icons.phone : Icons.link,
-                                          color: Colors.white,
-                                        ),
+                                        child: Icon(record.type == 'phone' ? Icons.phone : Icons.link, color: Colors.white),
                                       ),
                                       const SizedBox(width: 12),
                                       Text(record.value, style: const TextStyle(fontSize: 14)),
@@ -274,17 +426,10 @@ class _LookupPageState extends State<LookupPage> {
                                         height: 30,
                                         alignment: Alignment.center,
                                         decoration: BoxDecoration(
-                                          color: record.riskLevel == 'Dangerous'
-                                              ? Colors.red.shade700
-                                              : record.riskLevel == 'Warning'
-                                                  ? Colors.orange.shade700
-                                                  : const Color.fromARGB(255, 78, 114, 84),
+                                          color: record.riskLevel == 'Dangerous' ? Colors.red.shade700 : record.riskLevel == 'Warning' ? Colors.orange.shade700 : const Color.fromARGB(255, 78, 114, 84),
                                           borderRadius: BorderRadius.circular(30),
                                         ),
-                                        child: Text(
-                                          record.riskLevel,
-                                          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-                                        ),
+                                        child: Text(record.riskLevel, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
                                       ),
                                       const SizedBox(width: 10),
                                       const Icon(Icons.arrow_forward_ios_rounded, size: 16),
@@ -300,119 +445,6 @@ class _LookupPageState extends State<LookupPage> {
                   );
                 },
               ),
-
-              // StreamBuilder<List<SearchRecordModel>>(
-              //   stream: FirestoreService().getSearchHistory(),
-              //   builder: (context, snapshot) {
-              //     // USE LAST DATA while loading — no blink
-              //     final allRecords = snapshot.data ?? [];
-
-              //     final records = allRecords.where((r) {
-              //       if (_selectedFilter == 'Call') return r.type == 'phone';
-              //       if (_selectedFilter == 'Link') return r.type == 'link';
-              //       return true;
-              //     }).toList();
-
-              //     if (snapshot.connectionState == ConnectionState.waiting && allRecords.isEmpty) {
-              //       return const SizedBox(
-              //         height: 60,
-              //         child: Center(child: CircularProgressIndicator(color: Colors.white)),
-              //       );
-              //     }
-
-              //     if (records.isEmpty) {
-              //       return Padding(
-              //         padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
-              //         child: Column(
-              //           mainAxisSize: MainAxisSize.min,
-              //           children: [
-              //             const Icon(Icons.search_off_rounded, color: Colors.white70, size: 30),
-              //             const SizedBox(height: 5),
-              //             Text(
-              //               allRecords.isEmpty
-              //                   ? "No record found!"
-              //                   : "No ${_selectedFilter == 'Call' ? 'phone' : 'link'} records found!",
-              //               style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
-              //             ),
-              //           ],
-              //         ),
-              //       );
-              //     }
-
-              //     return ListView.builder(
-              //       shrinkWrap: true,
-              //       physics: const NeverScrollableScrollPhysics(),
-              //       itemCount: records.length,
-              //       itemBuilder: (context, index) {
-              //         final record = records[index];
-              //         return Padding(
-              //           padding: const EdgeInsets.fromLTRB(20, 5, 20, 5),
-              //           child: SizedBox(
-              //             height: 90,
-              //             child: ElevatedButton(
-              //               onPressed: () {
-              //                 Navigator.push(
-              //                   context,
-              //                   MaterialPageRoute(
-              //                     builder: (context) => ScamreportPage(
-              //                       result: record.rawData ?? {},
-              //                       inputText: record.value,
-              //                     ),
-              //                   ),
-              //                 );
-              //               },
-              //               style: ElevatedButton.styleFrom(
-              //                 backgroundColor: const Color.fromARGB(255, 233, 247, 235),
-              //                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-              //               ),
-              //               child: Row(
-              //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              //                 children: [
-              //                   Row(
-              //                     children: [
-              //                       CircleAvatar(
-              //                         backgroundColor: const Color.fromARGB(255, 44, 106, 46),
-              //                         child: Icon(
-              //                           record.type == 'phone' ? Icons.phone : Icons.link,
-              //                           color: Colors.white,
-              //                         ),
-              //                       ),
-              //                       const SizedBox(width: 12),
-              //                       Text(record.value, style: const TextStyle(fontSize: 14)),
-              //                     ],
-              //                   ),
-              //                   Row(
-              //                     children: [
-              //                       Container(
-              //                         width: 80,
-              //                         height: 30,
-              //                         alignment: Alignment.center,
-              //                         decoration: BoxDecoration(
-              //                           color: record.riskLevel == 'Dangerous'
-              //                               ? Colors.red.shade700
-              //                               : record.riskLevel == 'Warning'
-              //                                   ? Colors.orange.shade700
-              //                                   : const Color.fromARGB(255, 78, 114, 84),
-              //                           borderRadius: BorderRadius.circular(30),
-              //                         ),
-              //                         child: Text(
-              //                           record.riskLevel,
-              //                           style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-              //                         ),
-              //                       ),
-              //                       const SizedBox(width: 10),
-              //                       const Icon(Icons.arrow_forward_ios_rounded),
-              //                     ],
-              //                   ),
-              //                 ],
-              //               ),
-              //             ),
-              //           ),
-              //         );
-              //       },
-              //     );
-              //   },
-              // ),
             ],
           ),
         ),
@@ -424,17 +456,11 @@ class _LookupPageState extends State<LookupPage> {
 class FilterSelection extends StatelessWidget {
   final String selected;
   final Function(String) onChanged;
-
-  const FilterSelection({
-    super.key,
-    required this.selected,
-    required this.onChanged,
-  });
+  const FilterSelection({super.key, required this.selected, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
     final icons = {"Call": Icons.phone, "Link": Icons.link};
-
     return Row(
       children: ["Call", "Link"].map((label) {
         final isActive = selected == label;
@@ -449,21 +475,10 @@ class FilterSelection extends StatelessWidget {
                 borderRadius: BorderRadius.circular(30),
               ),
               child: Row(
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    icons[label],
-                    size: 16,
-                    color: isActive ? Colors.white : const Color.fromARGB(255, 44, 106, 46),
-                  ),
+                  Icon(icons[label], size: 16, color: isActive ? Colors.white : const Color.fromARGB(255, 44, 106, 46)),
                   const SizedBox(width: 6),
-                  Text(
-                    label,
-                    style: TextStyle(
-                      color: isActive ? Colors.white : const Color.fromARGB(255, 44, 106, 46),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  Text(label, style: TextStyle(color: isActive ? Colors.white : const Color.fromARGB(255, 44, 106, 46), fontWeight: FontWeight.w600)),
                 ],
               ),
             ),
@@ -473,146 +488,3 @@ class FilterSelection extends StatelessWidget {
     );
   }
 }
-
-
-// class ScamDetectedColorContainer extends StatefulWidget {
-//   const ScamDetectedColorContainer({super.key});
-
-//   @override
-//   State<ScamDetectedColorContainer> createState() => _ScamDetectedColorContainerState();
-// }
-
-// class _ScamDetectedColorContainerState extends State<ScamDetectedColorContainer> {
-//   final IndicatorColor = {
-//     "Dangerous": Colors.redAccent,
-//     "Warning": Color.fromRGBO(252, 220, 114, 1),
-//     "Safe": Colors.greenAccent,
-//   };
-  
-//   String _currentStatus = "Warning";
-  
-//   @override
-//   Widget build(BuildContext context) {
-//     return Padding(
-//       padding: EdgeInsets.symmetric(horizontal: 20),
-//       child: Container(
-//         width: double.infinity,
-//         height: 170,
-//         decoration: BoxDecoration(
-//           color: IndicatorColor[_currentStatus],
-//           borderRadius: BorderRadius.circular(20),
-//           border: Border.all(color: Color.fromARGB(255, 248, 195, 72), width: 1),
-//           boxShadow: [
-//             BoxShadow(
-//               color: Colors.black26,
-//               blurRadius: 10,
-//               offset: Offset(0, 4),
-//             ),
-//           ],
-//         ),
-//         child: Row(
-//           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//           crossAxisAlignment: CrossAxisAlignment.center,
-//           children: [
-//             Padding(
-//               padding: EdgeInsets.fromLTRB(20, 20, 5, 20),
-//               child: Column(
-//                 crossAxisAlignment: CrossAxisAlignment.start,
-//                 mainAxisAlignment: MainAxisAlignment.spaceAround,
-//                 children: [
-//                   Row(
-//                     children: [
-
-//                       Icon(
-//                         Icons.warning,
-//                         color: const Color.fromARGB(255, 0, 0, 0),
-//                         size: 20.0,
-//                         semanticLabel: 'Text to announce in acce',
-//                         ),
-                      
-//                       SizedBox(width: 10),
-
-//                       Text(
-//                         "Scam Detected",
-//                         style: TextStyle(
-//                           fontSize: 16,
-//                           fontWeight: FontWeight.bold,
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-
-//                   SizedBox(height: 10),
-
-//                   Text(
-//                     "Avoid interaction immediately",
-//                     style: TextStyle(fontSize: 13),
-//                   ),
-
-//                   SizedBox(height: 5),
-
-//                   Row(
-//                     children: [
-//                       Padding(
-//                         padding: EdgeInsets.symmetric(
-//                           horizontal: 0,
-//                           vertical: 10,
-//                         ),
-//                         child: SizedBox(
-//                           width: 130,
-//                           height: 35,
-//                           child: ElevatedButton(
-//                             onPressed: () {
-//                               Navigator.push(
-//                                 context,
-//                                 MaterialPageRoute(builder: (context) => const ScamreportPage()),
-//                               );
-//                             },
-//                             child: Text(
-//                               "Check Report",
-//                               style: TextStyle(fontSize: 12),
-//                             ),
-//                           ),
-//                         ),
-//                       ),
-
-//                       SizedBox(width: 8),
-                      
-//                       SizedBox(
-//                         width: 35,
-//                         height: 35,
-//                         child: ElevatedButton(
-//                           onPressed: () {
-//                             print("clicked!");
-//                           },
-//                           style: ElevatedButton.styleFrom(
-//                             padding: EdgeInsets.zero,
-//                             shape: RoundedRectangleBorder(
-//                               borderRadius: BorderRadius.circular(30),
-//                             ),
-//                           ),
-//                           child: Icon(Icons.report, size: 18),
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-
-//                   // SizedBox(width: 10),
-//                 ],
-//               ),
-//             ),
-
-//             Padding(
-//               padding: EdgeInsets.fromLTRB(15, 15, 15, 15),
-//               child: SizedBox(
-//               width: 120,
-//               height: 120,
-//               child: Scoregauge(score: 85),
-//             ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }

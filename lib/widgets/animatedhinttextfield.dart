@@ -2,13 +2,23 @@ import 'dart:async';
 
 import 'package:ScamTap/services/scam_service.dart';
 import 'package:ScamTap/pages/free_users/scanning_page.dart';
+import 'package:ScamTap/services/premium_service.dart';
+import 'package:ScamTap/pages/free_users/premium_purchase_page.dart';
 import 'package:flutter/material.dart';
 
 class AnimatedHintTextField extends StatefulWidget {
   final Function(bool, Map<String, dynamic>?)? onResultRecieved;
   final bool isMessage;
+  final TextEditingController? controller;
+  final VoidCallback? onRefreshRequired;
 
-  const AnimatedHintTextField({super.key, this.onResultRecieved, this.isMessage = false,});
+  const AnimatedHintTextField({
+    super.key, 
+    this.onResultRecieved, 
+    this.isMessage = false,
+    this.controller,
+    this.onRefreshRequired,
+  });
 
   @override
   State<AnimatedHintTextField> createState() => _AnimatedHintTextFieldState();
@@ -20,32 +30,64 @@ class _AnimatedHintTextFieldState extends State<AnimatedHintTextField> {
     "https://google.com/link",
   ];
 
-  final TextEditingController _controller = TextEditingController();
+  late final TextEditingController _internalController;
   bool _isLoading = false;
   bool _hasError = false;
   Map<String, dynamic>? _result;
   int _currentIndex = 0;
   Timer? _timer;
 
+  TextEditingController get _effectiveController => 
+      widget.controller ?? _internalController;
+
   @override
   void initState() {
     super.initState();
+    _internalController = TextEditingController();
     _timer = Timer.periodic(const Duration(seconds: 5), (_) {
-      setState(() {
-        _currentIndex = (_currentIndex + 1) % _hints.length;
-      });
+      if (mounted) {
+        setState(() {
+          _currentIndex = (_currentIndex + 1) % _hints.length;
+        });
+      }
     });
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _internalController.dispose();
     _timer?.cancel();
     super.dispose();
   }
 
+  Future<void> _showPremiumLimitDialog() async {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Daily Limit Reached'),
+        content: const Text('You have used your 5 free scans today. Upgrade to Premium for unlimited scans.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Maybe Later'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const PremiumPurchasePage()),
+              );
+            },
+            child: const Text('Upgrade Now'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _onSubmit(String value) async {
-    final input = _controller.text.trim();
+    final input = _effectiveController.text.trim();
     final isPhone = RegExp(r'^[0-9+\-\s().]+$').hasMatch(input);
     final isUrl   = input.startsWith('http') || input.startsWith('www') || input.contains('.');
 
@@ -61,6 +103,14 @@ class _AnimatedHintTextFieldState extends State<AnimatedHintTextField> {
       }
     }
 
+    final isPremium = await PremiumService.isPremium();
+    final remaining = await PremiumService.getRemainingScans();
+    
+    if (!isPremium && remaining <= 0) {
+      _showPremiumLimitDialog();
+      return;
+    }
+
     setState(() {
       _hasError  = false;
       _isLoading = true;
@@ -69,7 +119,9 @@ class _AnimatedHintTextFieldState extends State<AnimatedHintTextField> {
 
     widget.onResultRecieved?.call(false, null);
 
-    Navigator.push(
+    await PremiumService.incrementScanCount();
+
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => ScanningPage(
@@ -87,14 +139,17 @@ class _AnimatedHintTextFieldState extends State<AnimatedHintTextField> {
         ),
       ),
     );
-
-    setState(() => _isLoading = false);
+    
+    if (mounted) {
+      setState(() => _isLoading = false);
+      widget.onRefreshRequired?.call();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return TextField(
-      controller: _controller,
+      controller: _effectiveController,
       onSubmitted: _onSubmit,
       onChanged: (val) {
         if (_hasError) setState(() => _hasError = false);
@@ -117,7 +172,7 @@ class _AnimatedHintTextFieldState extends State<AnimatedHintTextField> {
             child: child,
           ),
           child: Text(
-          widget.isMessage
+            widget.isMessage
                 ? "Enter message here..."
                 : _hints[_currentIndex],
             key: ValueKey<String>(
@@ -146,7 +201,7 @@ class _AnimatedHintTextFieldState extends State<AnimatedHintTextField> {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(30),
                   onTap: () {
-                    _onSubmit(_controller.text);
+                    _onSubmit(_effectiveController.text);
                   },
                   child: Container(
                     width: 40,
@@ -186,13 +241,5 @@ class _AnimatedHintTextFieldState extends State<AnimatedHintTextField> {
         ),
       ),
     );
-  }
-
-  void _checkValue(value, dynamic widget) async {
-    final result = await fetchData(value);
-
-    if (result != null) {
-      widget.onResultReceived?.call(true);
-    }
   }
 }
