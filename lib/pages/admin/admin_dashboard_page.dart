@@ -311,7 +311,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   }) {
     return GestureDetector(
       onTap: () {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => page));
+        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => page), (route) => false,);
       },
 
       child: Container(
@@ -394,14 +394,16 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
         // NAVIGATION
         if (index == 1) {
-          Navigator.push(
+          Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => const ManageUsersPage()),
+            (route) => false,
           );
         } else if (index == 2) {
-          Navigator.push(
+          Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => const ManageReportsPage()),
+            (route) => false,
           );
         } else if (index == 3) {
           Navigator.push(
