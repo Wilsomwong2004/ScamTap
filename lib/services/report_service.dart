@@ -3,8 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class ReportService {
   static String _resolveScamType(String type, Map<String, dynamic>? result, String verdict) {
-    if (verdict != 'SCAM') return 'Safe';
-
     if (type == 'link') {
       final int malicious = result?['virustotal']?['malicious'] ?? 0;
       final int suspicious = result?['virustotal']?['suspicious'] ?? 0;
