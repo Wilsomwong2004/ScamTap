@@ -10,9 +10,10 @@ class PremiumPurchasePage extends StatefulWidget {
 }
 
 class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
-  int _selectedPlanIndex = 1;
+  int _selectedPlanIndex = 0; // 0=Monthly, 1=Yearly, 2=Lifetime
   bool _isPremium = false;
   bool _isLoading = true;
+  bool _isProcessing = false;
 
   final List<_PlanOption> _plans = [
     _PlanOption(
@@ -21,6 +22,7 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
       period: '/ month',
       subtext: 'Billed monthly',
       badge: null,
+      durationDays: 30,
     ),
     _PlanOption(
       label: 'Yearly',
@@ -28,6 +30,7 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
       period: '/ month',
       subtext: 'Billed RM 58.80/year',
       badge: 'BEST VALUE',
+      durationDays: 365,
     ),
     _PlanOption(
       label: 'Lifetime',
@@ -35,10 +38,11 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
       period: 'once',
       subtext: 'Pay once, own forever',
       badge: null,
+      durationDays: 365 * 10, // 10 years effectively lifetime
     ),
   ];
 
-  // ─── Colours ────────────────────────────────────────────────────────────────
+  // Colours
   static const _bg = Color(0xFFF5F5EE);
   static const _cardBg = Color(0xFFFFFFFF);
   static const _green = Color(0xFF3CB873);
@@ -61,6 +65,53 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
       _isPremium = isPremium;
       _isLoading = false;
     });
+  }
+
+  Future<void> _processPurchase() async {
+    setState(() {
+      _isProcessing = true;
+    });
+
+    try {
+      final selectedPlan = _plans[_selectedPlanIndex];
+      final authService = AuthService();
+      
+      // Calculate expiry date based on selected plan
+      DateTime expiryDate;
+      if (_selectedPlanIndex == 2) { // Lifetime
+        expiryDate = DateTime.now().add(const Duration(days: 365 * 10));
+      } else {
+        expiryDate = DateTime.now().add(Duration(days: selectedPlan.durationDays));
+      }
+      
+      // Call upgrade with expiry date
+      await authService.upgradeToPremium(expiryDate: expiryDate);
+      
+      // Refresh premium status cache
+      await PremiumService.refreshPremiumStatus();
+      
+      // Update local state
+      setState(() {
+        _isPremium = true;
+      });
+      
+      if (mounted) {
+        _showSuccessDialog(context);
+      }
+    } catch (e) {
+      print('Purchase error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Purchase failed: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+      }
+    }
   }
 
   @override
@@ -113,219 +164,225 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
     );
   }
 
-  // ─── Already Premium Screen ────────────────────────────────────────────────
+  // Already Premium Screen
   Widget _buildAlreadyPremiumScreen() {
-  return Scaffold(
-    backgroundColor: _bg,
-    body: SafeArea(
-      child: Column(
-        children: [
-          _buildAppBar(context),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 40),
-                  
-                  // Premium Crown Icon
-                  Container(
-                    padding: const EdgeInsets.all(30),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.amber.withOpacity(0.5),
-                          blurRadius: 30,
-                          spreadRadius: 10,
+    return Scaffold(
+      backgroundColor: _bg,
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildAppBar(context),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 40),
+                    
+                    // Premium Crown Icon
+                    Container(
+                      padding: const EdgeInsets.all(30),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.workspace_premium_rounded,
-                      color: Colors.white,
-                      size: 80,
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 32),
-                  
-                  // Premium Title
-                  const Text(
-                    '✨ YOU ARE A PREMIUM USER! ✨',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: _greenDark,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 16),
-                  
-                  // Premium Badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.amber.withOpacity(0.5),
+                            blurRadius: 30,
+                            spreadRadius: 10,
+                          ),
+                        ],
                       ),
-                      borderRadius: BorderRadius.circular(30),
+                      child: const Icon(
+                        Icons.workspace_premium_rounded,
+                        color: Colors.white,
+                        size: 80,
+                      ),
                     ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.star, color: Colors.white, size: 20),
-                        SizedBox(width: 8),
-                        Text(
-                          'ACTIVE',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
+                    
+                    const SizedBox(height: 32),
+                    
+                    // Premium Title
+                    const Text(
+                      'YOU ARE A PREMIUM USER!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: _greenDark,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Premium Badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
                         ),
-                      ],
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 24),
-                  
-                  // Features List
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.amber.shade200, width: 2),
-                    ),
-                    child: Column(
-                      children: [
-                        _buildPremiumFeatureItem(Icons.all_inclusive, 'Unlimited Scans', 'Scan any number, link, or message'),
-                        const Divider(),
-                        _buildPremiumFeatureItem(Icons.bar_chart, 'Advanced Analytics', '30/90 days & 1 year insights'),
-                        const Divider(),
-                        _buildPremiumFeatureItem(Icons.shield, 'Priority Protection', 'Real-time scam alerts'),
-                        const Divider(),
-                        _buildPremiumFeatureItem(Icons.support_agent, 'Priority Support', 'Get help when you need it'),
-                      ],
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 32),
-                  
-                  // Expiry Info
-                  FutureBuilder<DateTime?>(
-                    future: PremiumService.getPremiumExpiry(),
-                    builder: (context, snapshot) {
-                      if (snapshot.hasData && snapshot.data != null) {
-                        return Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.star, color: Colors.white, size: 20),
+                          SizedBox(width: 8),
+                          Text(
+                            'ACTIVE',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
                           ),
-                          child: Column(
-                            children: [
-                              const Text(
-                                'Premium Valid Until',
-                                style: TextStyle(color: Colors.grey),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${snapshot.data!.day}/${snapshot.data!.month}/${snapshot.data!.year}',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: _greenDark,
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Features List
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.amber.shade200, width: 2),
+                      ),
+                      child: Column(
+                        children: [
+                          _buildPremiumFeatureItem(Icons.notifications_active, 'Latest Scam Alerts', 'Real-time scam alerts and news updates'),
+                          const Divider(),
+                          _buildPremiumFeatureItem(Icons.queue, 'Bulk Scan', 'Scan multiple numbers, links, or messages at once'),
+                          const Divider(),
+                          _buildPremiumFeatureItem(Icons.auto_awesome, 'AI Analysis Results', 'Advanced AI-powered scam detection with detailed insights'),
+                          const Divider(),
+                          _buildPremiumFeatureItem(Icons.all_inclusive, 'Unlimited Scans', 'No daily limits - scan as much as you want'),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 32),
+                    
+                    // Expiry Info
+                    FutureBuilder<DateTime?>(
+                      future: PremiumService.getPremiumExpiry(),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData && snapshot.data != null) {
+                          final expiry = snapshot.data!;
+                          final isLifetime = expiry.isAfter(DateTime.now().add(const Duration(days: 365 * 5)));
+                          return Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Column(
+                              children: [
+                                Text(
+                                  isLifetime ? 'Premium Status' : 'Premium Valid Until',
+                                  style: const TextStyle(color: Colors.grey),
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 4),
+                                Text(
+                                  isLifetime ? 'LIFETIME ACTIVE' : '${expiry.day}/${expiry.month}/${expiry.year}',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: _greenDark,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Go Back Button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 55,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          // Force refresh premium status on parent pages
+                          PremiumService.refreshPremiumStatus();
+                          Navigator.pop(context);
+                        },
+                        icon: const Icon(Icons.arrow_back),
+                        label: const Text(
+                          'Back to App',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _green,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
                           ),
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    },
-                  ),
-                  
-                  const SizedBox(height: 24),
-                  
-                  // Go Back Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 55,
-                    child: ElevatedButton.icon(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.arrow_back),
-                      label: const Text(
-                        'Back to App',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _green,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-  Widget _buildPremiumFeatureItem(IconData icon, String title, String subtitle) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 12),
-    child: Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: _greenLight,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, color: _green, size: 24),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
+                  ],
                 ),
               ),
-              Text(
-                subtitle,
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
-        const Icon(Icons.check_circle, color: Colors.green, size: 20),
-      ],
-    ),
-  );
-}
+      ),
+    );
+  }
 
-  // ─── App bar ────────────────────────────────────────────────────────────────
+  Widget _buildPremiumFeatureItem(IconData icon, String title, String subtitle) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: _greenLight,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: _green, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.check_circle, color: Colors.green, size: 20),
+        ],
+      ),
+    );
+  }
+
+  // App bar
   Widget _buildAppBar(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(4, 8, 16, 0),
@@ -346,31 +403,12 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
             ),
           ),
           const Spacer(),
-          if (_isPremium)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.amber,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.star, color: Colors.white, size: 14),
-                  SizedBox(width: 4),
-                  Text(
-                    'ACTIVE',
-                    style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-            ),
         ],
       ),
     );
   }
 
-  // ─── Hero card ──────────────────────────────────────────────────────────────
+  // Hero card
   Widget _buildHeroCard() {
     return Container(
       width: double.infinity,
@@ -493,7 +531,7 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
     );
   }
 
-  // ─── Section label ──────────────────────────────────────────────────────────
+  // Section label
   Widget _buildSectionLabel(String text) {
     return Text(
       text,
@@ -506,7 +544,7 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
     );
   }
 
-  // ─── Plan cards ─────────────────────────────────────────────────────────────
+  // Plan cards
   List<Widget> _buildPlanCards() {
     return List.generate(_plans.length, (i) {
       final plan = _plans[i];
@@ -640,38 +678,28 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
     });
   }
 
-  // ─── Features card ──────────────────────────────────────────────────────────
+  // Features card - UPDATED with new features
   Widget _buildFeaturesCard() {
     final features = [
       (
         Icons.notifications_active_rounded,
-        'Real-time scam alerts',
-        'Get notified instantly for your area',
+        'Latest Scam Alerts',
+        'Get real-time scam alerts and news updates',
       ),
       (
-        Icons.search_rounded,
-        'Unlimited number lookups',
-        'Check any number anytime',
+        Icons.queue_rounded,
+        'Bulk Scan',
+        'Scan multiple numbers, links, or messages at once',
       ),
       (
-        Icons.smart_toy_rounded,
-        'AI message analysis',
-        'Paste any message for instant verdict',
+        Icons.auto_awesome_rounded,
+        'AI Analysis Results',
+        'Advanced AI-powered scam detection with detailed insights',
       ),
       (
-        Icons.bar_chart_rounded,
-        'Scam activity monitor',
-        'Live heatmap of scam activity near you',
-      ),
-      (
-        Icons.block_rounded,
-        'Auto-block known scammers',
-        'Over 200,000 numbers flagged',
-      ),
-      (
-        Icons.support_agent_rounded,
-        'Priority support',
-        'Get help when you need it most',
+        Icons.all_inclusive_rounded,
+        'Unlimited Scans',
+        'No daily limits - scan as much as you want',
       ),
     ];
 
@@ -732,7 +760,7 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
     );
   }
 
-  // ─── Trust row ──────────────────────────────────────────────────────────────
+  // Trust row
   Widget _buildTrustRow() {
     final items = [
       (Icons.lock_outline_rounded, 'Secure\nPayment'),
@@ -765,7 +793,7 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
     );
   }
 
-  // ─── Success dialog ─────────────────────────────────────────────────────────
+  // Success dialog
   void _showSuccessDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -804,7 +832,7 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  'Welcome to becoming a Premium user.',
+                  'You are now a Premium user!',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 13.5,
@@ -819,7 +847,7 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
                   child: ElevatedButton(
                     onPressed: () {
                       Navigator.pop(context); // close dialog
-                      Navigator.pop(context); // go back to home
+                      Navigator.pop(context); // go back to previous page
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _green,
@@ -846,7 +874,7 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
     );
   }
 
-  // ─── Bottom bar ─────────────────────────────────────────────────────────────
+  // Bottom bar
   Widget _buildBottomBar() {
     final plan = _plans[_selectedPlanIndex];
     return Container(
@@ -869,15 +897,7 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
             width: double.infinity,
             height: 52,
             child: ElevatedButton(
-              onPressed: () async {
-                final authService = AuthService();
-
-                await authService.upgradeToPremium();
-
-                await PremiumService.refreshPremiumStatus();
-
-                _showSuccessDialog(context);
-              },
+              onPressed: _isProcessing ? null : _processPurchase,
               style: ElevatedButton.styleFrom(
                 backgroundColor: _green,
                 foregroundColor: Colors.white,
@@ -886,14 +906,23 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              child: Text(
-                'Get ${plan.label} — ${plan.price}',
-                style: const TextStyle(
-                  fontSize: 15.5,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.2,
-                ),
-              ),
+              child: _isProcessing
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(
+                      'Get ${plan.label} — ${plan.price}',
+                      style: const TextStyle(
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
             ),
           ),
           const SizedBox(height: 8),
@@ -908,13 +937,14 @@ class _PremiumPurchasePageState extends State<PremiumPurchasePage> {
   }
 }
 
-// ─── Data class ─────────────────────────────────────────────────────────────
+// Data class
 class _PlanOption {
   final String label;
   final String price;
   final String period;
   final String subtext;
   final String? badge;
+  final int durationDays;
 
   const _PlanOption({
     required this.label,
@@ -922,5 +952,6 @@ class _PlanOption {
     required this.period,
     required this.subtext,
     required this.badge,
+    required this.durationDays,
   });
 }

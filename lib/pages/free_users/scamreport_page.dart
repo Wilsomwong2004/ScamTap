@@ -25,14 +25,6 @@ class _ScamreportPageState extends State<ScamreportPage> {
   void initState() {
     super.initState();
     _checkPremium();
-    
-    // Debug print to see if AI advice exists
-    Future.delayed(Duration.zero, () {
-      print('=== SCAMREPORT PAGE DEBUG ===');
-      print('Result: ${widget.result}');
-      print('AI Analysis: ${widget.result?['ai_analysis']}');
-      print('AI Advice: ${widget.result?['ai_analysis']?['advice']}');
-    });
   }
 
   Future<void> _checkPremium() async {
@@ -48,14 +40,8 @@ class _ScamreportPageState extends State<ScamreportPage> {
     final bool isScam = widget.result?['is_scam'] ?? detail['is_scam'] ?? false;
     final double riskScore = (widget.result?['risk_score'] as num?)?.toDouble() ?? (widget.result?['riskScore'] as num?)?.toDouble() ?? 0;
     final String verdict = widget.result?['verdict'] ?? detail['verdict'] ?? 'UNKNOWN';
-    final String type =
-    widget.result?['type'] ??
-    detail['type'] ??
-    'unknown';
-    final String aiAdvice =
-    widget.result?['ai_analysis']?['advice'] ??
-    detail['ai_analysis']?['advice'] ??
-    '';
+    final String type = widget.result?['type'] ?? detail['type'] ?? 'unknown';
+    final String aiAdvice = widget.result?['ai_analysis']?['advice'] ?? detail['ai_analysis']?['advice'] ?? '';
     final String confidence = widget.result?['ai_analysis']?['confidence'] ?? detail['ai_analysis']?['confidence'] ?? 'low';
     final int policeCount = widget.result?['penipumy']?['police_report_count'] ?? detail['penipumy']?['police_report_count'] ?? 0;
     final bool isFraud = widget.result?['penipumy']?['fraud'] ?? detail['penipumy']?['fraud'] ?? false;
@@ -142,6 +128,26 @@ class _ScamreportPageState extends State<ScamreportPage> {
                               isScam ? "High risk! Do not interact!" : "No threats detected",
                               style: const TextStyle(fontSize: 13),
                             ),
+                            if (_isPremium)
+                              Container(
+                                margin: const EdgeInsets.only(top: 8),
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.amber.shade100,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.auto_awesome, size: 10, color: Colors.amber),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Premium Analysis',
+                                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
+                                    ),
+                                  ],
+                                ),
+                              ),
                           ],
                         ),
                       ),
@@ -150,9 +156,8 @@ class _ScamreportPageState extends State<ScamreportPage> {
 
                   const SizedBox(height: 20),
 
-                  // AI ADVICE SECTION - REMOVED PREMIUM CHECK FOR TESTING
-                  // This will show for ALL users so you can test
-                  if (aiAdvice.isNotEmpty) ...[
+                  // AI ADVICE SECTION - ONLY FOR PREMIUM USERS
+                  if (_isPremium && aiAdvice.isNotEmpty) ...[
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
@@ -210,9 +215,9 @@ class _ScamreportPageState extends State<ScamreportPage> {
                                     color: Colors.amber,
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: Text(
-                                    _isPremium ? 'PREMIUM' : 'TEST MODE',
-                                    style: const TextStyle(
+                                  child: const Text(
+                                    'PREMIUM',
+                                    style: TextStyle(
                                       fontSize: 9,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
@@ -252,35 +257,57 @@ class _ScamreportPageState extends State<ScamreportPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                  ] else ...[
-                    // Show message if no AI advice
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.info_outline, size: 16, color: Colors.grey),
-                              const SizedBox(width: 8),
-                              const Text(
-                                "AI Advice Status",
-                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  ],
+
+                  // Upgrade prompt for free users
+                  if (!_isPremium) ...[
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const PremiumPurchasePage()),
+                        );
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.shade100,
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'No AI advice generated. Check console for debug info.',
-                            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                          ),
-                        ],
+                              child: const Icon(Icons.lock, size: 14, color: Colors.amber),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Upgrade to Premium to see AI safety advice',
+                                style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFFFFC940), Color(0xFFFF9500)],
+                                ),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: const Text(
+                                'UPGRADE',
+                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),

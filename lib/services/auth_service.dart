@@ -110,22 +110,24 @@ class AuthService {
     }
   }
 
-  Future<void> upgradeToPremium() async {
-    try {
-      String uid = _auth.currentUser!.uid;
-
-      await _firestore.collection('usersData').doc(uid).update({
-        'Role': 'premium user',
-        'premiumSince': FieldValue.serverTimestamp(),
-        'premiumExpiry': DateTime.now().add(const Duration(days: 365)),
-      });
-
-      // Refresh premium cache
-      await PremiumService.refreshPremiumStatus();
-    } catch (e) {
-      print('Upgrade premium error: $e');
-    }
+  Future<void> upgradeToPremium({DateTime? expiryDate}) async {
+  try {
+    String uid = _auth.currentUser!.uid;
+    
+    final expiry = expiryDate ?? DateTime.now().add(const Duration(days: 365));
+    
+    await _firestore.collection('usersData').doc(uid).update({
+      'Role': 'premium user',
+      'premiumSince': FieldValue.serverTimestamp(),
+      'premiumExpiry': expiry,
+    });
+    
+    // Refresh premium cache
+    await PremiumService.refreshPremiumStatus();
+  } catch (e) {
+    print('Upgrade premium error: $e');
   }
+}
 
   Future<void> signOut() async {
     try {

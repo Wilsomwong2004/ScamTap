@@ -50,6 +50,7 @@ class ReportService {
         'reportBy'          : user?.displayName ?? user?.email ?? 'Anonymous',
         'reportDate'        : Timestamp.now(),
         'reportDescription' : reason,
+        'reportMessage'   : type == 'message' ? value : '',
         'reportStatus'      : 'Pending',
         'reportedLink'      : type == 'link'  ? value : '',
         'reportedNumber'    : type == 'phone' ? value : '',

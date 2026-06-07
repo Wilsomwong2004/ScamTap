@@ -7,6 +7,7 @@ import 'package:ScamTap/pages/free_users/scamreport_page.dart';
 import 'package:ScamTap/services/firestore_service.dart';
 import 'package:ScamTap/services/cache_service.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ScamTap/widgets/animatedhinttextfield.dart';
 import 'package:ScamTap/widgets/miniprofile.dart';
 import 'package:ScamTap/pages/free_users/scanning_page.dart';
@@ -123,6 +124,7 @@ class _LookupPageState extends State<LookupPage> {
     await _loadPremiumStatus();
   }
 
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -363,6 +365,10 @@ class _LookupPageState extends State<LookupPage> {
                   }),
                 ),
               ),
+              const SizedBox(height: 10),
+
+              
+
               const SizedBox(height: 10),
               StreamBuilder<List<SearchRecordModel>>(
                 stream: FirestoreService().getSearchHistory(),

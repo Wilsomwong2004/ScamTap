@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
 
-import 'package:firebase_ai/firebase_ai.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
@@ -9,11 +8,9 @@ import 'firestore_service.dart';
 
 String _formatPhoneNumber(String value) {
   String cleaned = value.replaceAll(RegExp(r'[\s\-\(\)]'), '');
-
   if (cleaned.startsWith('+60')) return cleaned.replaceFirst('+', '');
   if (cleaned.startsWith('60')) return cleaned;
   if (cleaned.startsWith('0')) return '60${cleaned.substring(1)}';
-
   return cleaned;
 }
 
@@ -24,7 +21,6 @@ bool _isPhoneNumber(String value) {
 
 bool _isLink(String value) {
   final lower = value.toLowerCase().trim();
-
   return lower.startsWith('http://') ||
       lower.startsWith('https://') ||
       lower.startsWith('www.');
@@ -46,12 +42,9 @@ Future<Map<String, dynamic>> fetchData(String value) async {
       final numverifyUrl = Uri.parse(
         'http://apilayer.net/api/validate?access_key=$numverifyAPI&number=$formattedPhone',
       );
-
       final numverifyResponse = await http.get(numverifyUrl);
-
       if (numverifyResponse.statusCode == 200) {
         final data = jsonDecode(numverifyResponse.body);
-
         if (data['success'] != false) {
           result['numverify'] = data;
         }
@@ -64,12 +57,10 @@ Future<Map<String, dynamic>> fetchData(String value) async {
       final penipuUrl = Uri.parse(
         'https://penipu.my/api/v1/phone?q=$formattedPhone',
       );
-
       final penipuResponse = await http.get(
         penipuUrl,
         headers: {'X-API-Key': penipuMYAPI},
       );
-
       if (penipuResponse.statusCode == 200) {
         result['penipumy'] = jsonDecode(penipuResponse.body);
       }
@@ -81,7 +72,6 @@ Future<Map<String, dynamic>> fetchData(String value) async {
 
     try {
       final cleanUrl = value.startsWith('www.') ? 'https://$value' : value;
-
       final virustotalSubmitResponse = await http.post(
         Uri.parse('https://www.virustotal.com/api/v3/urls'),
         headers: {
@@ -94,19 +84,14 @@ Future<Map<String, dynamic>> fetchData(String value) async {
       if (virustotalSubmitResponse.statusCode == 200) {
         final submitData = jsonDecode(virustotalSubmitResponse.body);
         final analysisId = submitData['data']['id'];
-
         await Future.delayed(const Duration(seconds: 3));
-
         final reportResponse = await http.get(
           Uri.parse('https://www.virustotal.com/api/v3/analyses/$analysisId'),
           headers: {'x-apikey': virustotalAPI},
         );
-
         if (reportResponse.statusCode == 200) {
           final reportData = jsonDecode(reportResponse.body);
-
-          result['virustotal'] =
-              reportData['data']['attributes']['stats'] ?? {};
+          result['virustotal'] = reportData['data']['attributes']['stats'] ?? {};
         }
       }
     } catch (e) {
@@ -129,9 +114,7 @@ Future<Map<String, dynamic>> fetchData(String value) async {
 
       if (hfResponse.statusCode == 200) {
         final hfData = jsonDecode(hfResponse.body);
-
         List predictions = [];
-
         if (hfData is List && hfData.isNotEmpty) {
           if (hfData[0] is List) {
             predictions = hfData[0];
@@ -139,15 +122,11 @@ Future<Map<String, dynamic>> fetchData(String value) async {
             predictions = hfData;
           }
         }
-
         final spamEntry = predictions.firstWhere(
           (p) => p['label'] == 'LABEL_1',
           orElse: () => {'score': 0.0},
         );
-
-        final double spamScore =
-            (spamEntry['score'] as num?)?.toDouble() ?? 0.0;
-
+        final double spamScore = (spamEntry['score'] as num?)?.toDouble() ?? 0.0;
         result['huggingface'] = {
           'spam_score': spamScore,
           'is_spam': spamScore > 0.7,
@@ -162,7 +141,6 @@ Future<Map<String, dynamic>> fetchData(String value) async {
   await _saveToFirebase(value, result);
 
   log('=== FINAL RESULT ===');
-  log('Result: $result');
   log('AI Advice: ${result['ai_analysis']?['advice']}');
 
   return result;
@@ -175,153 +153,133 @@ Future<void> _getAIAnalysis(
   final bool isValidNumber = result['numverify']?['valid'] ?? false;
   final bool isFraud = result['penipumy']?['fraud'] ?? false;
   final bool isSpam = result['penipumy']?['spam'] ?? false;
-  final int policeReports =
-      result['penipumy']?['police_report_count'] ?? 0;
-
+  final int policeReports = result['penipumy']?['police_report_count'] ?? 0;
   final bool hfIsSpam = result['huggingface']?['is_spam'] ?? false;
-  final double hfSpamScore =
-      (result['huggingface']?['spam_score'] as num?)?.toDouble() ?? 0.0;
-
+  final double hfSpamScore = (result['huggingface']?['spam_score'] as num?)?.toDouble() ?? 0.0;
   final int malicious = result['virustotal']?['malicious'] ?? 0;
   final int suspicious = result['virustotal']?['suspicious'] ?? 0;
-
   final String country = result['numverify']?['country_name'] ?? 'Unknown';
   final String carrier = result['numverify']?['carrier'] ?? 'Unknown';
-
   final String type = result['type'] ?? 'message';
 
   int riskScore = 10;
-
   if (type == 'phone' && !isValidNumber) riskScore += 10;
   if (isSpam) riskScore += 20;
   if (isFraud) riskScore += 35;
-  if (policeReports > 0) {
-    riskScore += (policeReports * 5).clamp(0, 25).toInt();
-  }
-
+  if (policeReports > 0) riskScore += (policeReports * 5).clamp(0, 25).toInt();
   if (hfIsSpam) riskScore += 20;
-  if (malicious > 0) {
-    riskScore += (malicious * 5).clamp(0, 30).toInt();
-  }
-  if (suspicious > 0) {
-    riskScore += (suspicious * 3).clamp(0, 15).toInt();
-  }
-
+  if (malicious > 0) riskScore += (malicious * 5).clamp(0, 30).toInt();
+  if (suspicious > 0) riskScore += (suspicious * 3).clamp(0, 15).toInt();
   riskScore = riskScore.clamp(1, 100);
 
-  final bool finalIsScam =
-      isFraud ||
-      isSpam ||
-      policeReports > 0 ||
-      hfIsSpam ||
-      malicious > 0 ||
-      suspicious > 0 ||
-      riskScore >= 60;
-
+  final bool finalIsScam = isFraud || isSpam || policeReports > 0 || hfIsSpam || malicious > 0 || suspicious > 0 || riskScore >= 60;
   final String verdict = finalIsScam ? 'SCAM' : 'SAFE';
-
-  final String confidence =
-      (isFraud || policeReports > 0 || malicious > 0)
-          ? 'high'
-          : (isSpam || hfIsSpam || suspicious > 0)
-              ? 'medium'
-              : 'low';
+  final String confidence = (isFraud || policeReports > 0 || malicious > 0) ? 'high' : (isSpam || hfIsSpam || suspicious > 0) ? 'medium' : 'low';
 
   String prompt = '';
 
   if (type == 'phone') {
     prompt = '''
-You are a scam prevention assistant for a mobile app called ScamTap.
+You are a scam prevention expert. Give safety advice for this phone number.
 
-The user checked this phone number:
-$value
+Phone number: "$value"
+Risk score: $riskScore/100
+Country: $country
+Carrier: $carrier
+Valid number: ${isValidNumber ? 'Yes' : 'No'}
+Fraud reported: ${isFraud ? 'Yes' : 'No'}
+Spam reported: ${isSpam ? 'Yes' : 'No'}
+Police reports: $policeReports
 
-Scan result:
-- Verdict: $verdict
-- Risk score: $riskScore/100
-- Country: $country
-- Carrier: $carrier
-- Valid number: ${isValidNumber ? 'Yes' : 'No'}
-- Fraud reported: ${isFraud ? 'Yes' : 'No'}
-- Spam reported: ${isSpam ? 'Yes' : 'No'}
-- Police reports: $policeReports
-
-Write 3 short sentences of safety advice.
-Use simple English.
-Do not use markdown.
-Do not use bullet points.
-Do not use emojis.
-Do not mention that you are an AI.
+Write 3 to 4 complete sentences of safety advice in plain text. Do not use bullet points, asterisks, markdown, or special characters. Just write normal sentences. Tell the user what to do.
 ''';
   } else if (type == 'link') {
     prompt = '''
-You are a scam prevention assistant for a mobile app called ScamTap.
+You are a scam prevention expert. Give safety advice for this link.
 
-The user checked this link:
-$value
+Link: "$value"
+Risk score: $riskScore/100
+Malicious engines: $malicious
+Suspicious engines: $suspicious
 
-Scan result:
-- Verdict: $verdict
-- Risk score: $riskScore/100
-- Malicious engines: $malicious
-- Suspicious engines: $suspicious
-
-Write 3 short sentences of safety advice.
-Use simple English.
-Do not use markdown.
-Do not use bullet points.
-Do not use emojis.
-Do not mention that you are an AI.
+Write 3 to 4 complete sentences of safety advice in plain text. Do not use bullet points, asterisks, markdown, or special characters. Just write normal sentences. Tell the user what to do.
 ''';
   } else {
     prompt = '''
-You are a scam prevention assistant for a mobile app called ScamTap.
+You are a scam prevention expert. Give safety advice for this message.
 
-The user checked this message:
-$value
+Message: "$value"
+Risk score: $riskScore/100
+Spam probability: ${(hfSpamScore * 100).toStringAsFixed(0)}%
+Likely spam: ${hfIsSpam ? 'Yes' : 'No'}
 
-Scan result:
-- Verdict: $verdict
-- Risk score: $riskScore/100
-- Spam score: ${(hfSpamScore * 100).toStringAsFixed(0)}%
-- Likely spam: ${hfIsSpam ? 'Yes' : 'No'}
-
-Write 3 short sentences of safety advice.
-Use simple English.
-Do not use markdown.
-Do not use bullet points.
-Do not use emojis.
-Do not mention that you are an AI.
+Write 3 to 4 complete sentences of safety advice in plain text. Do not use bullet points, asterisks, markdown, or special characters. Just write normal sentences. Tell the user what to do.
 ''';
   }
 
   String aiAdvice = '';
 
   try {
-    final model = FirebaseAI.googleAI().generativeModel(
-      model: 'gemini-3.1-flash',
+    final apiKey = dotenv.env['GEMINI_API_KEY'] ?? 'AIzaSyDkVcm9kTtCz6MRd8PuClV5-TX5n-Rcnl4';
+    
+    log('Calling Gemini API for $type...');
+    
+    final response = await http.post(
+      Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=$apiKey'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'contents': [
+          {
+            'parts': [
+              {'text': prompt}
+            ]
+          }
+        ],
+        'generationConfig': {
+          'temperature': 0.7,
+          'maxOutputTokens': 400,
+          'topP': 0.95,
+        }
+      }),
     );
-
-    final response = await model.generateContent([
-      Content.text(prompt),
-    ]);
-
-    aiAdvice = response.text?.trim() ?? '';
-
-    if (aiAdvice.isEmpty) {
-      throw Exception('Firebase AI returned empty response');
+    
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      aiAdvice = data['candidates']?[0]?['content']?['parts']?[0]?['text'] ?? '';
+      
+      // Clean up the response - remove any special characters
+      aiAdvice = aiAdvice
+          .replaceAll('*', '')
+          .replaceAll('-', '')
+          .replaceAll('```', '')
+          .replaceAll('markdown', '')
+          .replaceAll('Actionable Advice', '')
+          .replaceAll('Next steps/monitoring', '')
+          .replaceAll(':', '')
+          .trim();
+      
+      // Clean up multiple spaces
+      aiAdvice = aiAdvice.replaceAll(RegExp(r'\s+'), ' ');
+      
+      // If the advice starts with a number or bullet, clean it
+      if (aiAdvice.startsWith(RegExp(r'[\d\*\-•]'))) {
+        aiAdvice = aiAdvice.substring(aiAdvice.indexOf(' ') + 1);
+      }
+      
+      log('AI Advice: $aiAdvice');
+      log('AI Advice length: ${aiAdvice.length}');
+    } else {
+      log('Gemini API error: ${response.statusCode}');
+      aiAdvice = 'Unable to generate advice. Please try again later.';
     }
-
-    log('Firebase AI advice generated: $aiAdvice');
-  } catch (e, stackTrace) {
-    log('Firebase AI failed: $e');
-    log('StackTrace: $stackTrace');
-
-    aiAdvice = _fallbackAdvice(
-      type: type,
-      verdict: verdict,
-      riskScore: riskScore,
-    );
+    
+    if (aiAdvice.isEmpty || aiAdvice.length < 20) {
+      aiAdvice = 'Based on our analysis, this ${type == 'phone' ? 'phone number' : type == 'link' ? 'link' : 'message'} has a risk score of $riskScore/100. We recommend avoiding any interaction and reporting suspicious activity through our app.';
+    }
+    
+  } catch (e) {
+    log('AI generation failed: $e');
+    aiAdvice = 'Unable to connect to AI service. Please check your internet connection and try again.';
   }
 
   result['ai_analysis'] = {
@@ -334,36 +292,6 @@ Do not mention that you are an AI.
   result['is_scam'] = finalIsScam;
   result['verdict'] = verdict;
   result['risk_score'] = riskScore;
-}
-
-String _fallbackAdvice({
-  required String type,
-  required String verdict,
-  required int riskScore,
-}) {
-  final bool risky = verdict == 'SCAM' || riskScore >= 60;
-
-  if (type == 'phone') {
-    if (risky) {
-      return 'This phone number looks suspicious based on the scan result. Do not answer, call back, send money, or share OTP codes with this caller. If the caller claims to be from a bank or official organization, contact the official hotline directly.';
-    }
-
-    return 'This phone number does not show strong scam signs based on the scan result. However, stay careful if the caller asks for money, passwords, OTP codes, or personal details. Verify the caller through an official source before taking action.';
-  }
-
-  if (type == 'link') {
-    if (risky) {
-      return 'This link looks suspicious based on the scan result. Do not open it, enter login details, download files, or make any payment through the website. Visit the official website manually instead of using this link.';
-    }
-
-    return 'This link does not show strong scam signs based on the scan result. However, check the website address carefully before entering personal or banking details. Avoid using links from unknown senders.';
-  }
-
-  if (risky) {
-    return 'This message looks suspicious based on the scan result. Do not click any links, reply to the sender, send money, or share OTP codes. Verify the message through an official app, website, or hotline before taking action.';
-  }
-
-  return 'This message does not show strong scam signs based on the scan result. However, stay careful if it asks for money, passwords, OTP codes, or personal information. Always verify unknown messages before responding.';
 }
 
 Future<void> _saveToFirebase(

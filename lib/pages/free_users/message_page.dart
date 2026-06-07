@@ -7,6 +7,7 @@ import 'package:ScamTap/models/search_record_model.dart';
 import 'package:ScamTap/pages/free_users/scamreport_page.dart';
 import 'package:ScamTap/services/firestore_service.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ScamTap/widgets/animatedhinttextfield.dart';
 import 'package:ScamTap/widgets/miniprofile.dart';
 import 'package:ScamTap/pages/free_users/scanning_page.dart';
@@ -297,6 +298,9 @@ class _MessagePageState extends State<MessagePage> {
                         : const SizedBox.shrink(key: ValueKey('empty')),
               ),
               SizedBox(height: _showResult ? 25 : 10),
+
+            
+              const SizedBox(height: 10),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: SizedBox(width: double.infinity, child: const Text("Recent Message", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.white))),
