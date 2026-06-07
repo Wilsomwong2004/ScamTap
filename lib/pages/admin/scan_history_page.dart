@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'admin_dashboard_page.dart';
 import 'manage_users_page.dart';
 import 'manage_reports_page.dart';
-import 'notifications_page.dart';
 import 'settings_page.dart';
 
 class ScanHistoryPage extends StatelessWidget {
@@ -43,7 +42,7 @@ class ScanHistoryPage extends StatelessWidget {
           var docs = snapshot.data!.docs;
 
           return ListView.builder(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
             itemCount: docs.length,
 
             itemBuilder: (context, index) {

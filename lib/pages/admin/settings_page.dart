@@ -12,6 +12,31 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   String adminUsername = "Admin";
+  String adminEmail = "";
+  String adminUid = "";
+
+  @override
+  void initState() {
+    super.initState();
+    loadAdminData();
+  }
+
+  Future<void> loadAdminData() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    if (uid == null) return;
+
+    final doc = await FirebaseFirestore.instance
+        .collection("usersData")
+        .doc(uid)
+        .get();
+
+    setState(() {
+      adminUid = uid;
+      adminUsername = doc.data()?["Username"] ?? "Admin";
+      adminEmail = doc.data()?["Email"] ?? "";
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -92,6 +117,13 @@ class _SettingsPageState extends State<SettingsPage> {
 
             buildCard(
               context,
+              Icons.lock_outline,
+              "Privacy",
+              "Terms and conditions",
+            ),
+
+            buildCard(
+              context,
               Icons.info_outline,
               "About System",
               "View application information",
@@ -156,11 +188,11 @@ class _SettingsPageState extends State<SettingsPage> {
           // MANAGE PROFILE
           if (title == "Manage Profile") {
             TextEditingController usernameController = TextEditingController(
-              text: "Admin",
+              text: adminUsername,
             );
 
             TextEditingController emailController = TextEditingController(
-              text: "admin@scamtap.com",
+              text: adminEmail,
             );
 
             showDialog(
@@ -242,7 +274,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       onPressed: () async {
                         await FirebaseFirestore.instance
                             .collection('usersData')
-                            .doc('GXVenKdMfrr13qJg1SzB')
+                            .doc(adminUid)
                             .update({'Username': usernameController.text});
 
                         setState(() {
@@ -339,14 +371,50 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
 
                     ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
+                      onPressed: () async {
+                        String newPassword = passwordController.text.trim();
 
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Password Updated Successfully"),
-                          ),
-                        );
+                        String confirmPassword = confirmController.text.trim();
+
+                        if (newPassword.isEmpty || confirmPassword.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Please fill all fields"),
+                            ),
+                          );
+                          return;
+                        }
+
+                        if (newPassword != confirmPassword) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Passwords do not match"),
+                            ),
+                          );
+                          return;
+                        }
+
+                        try {
+                          await FirebaseAuth.instance.currentUser!
+                              .updatePassword(newPassword);
+
+                          await FirebaseFirestore.instance
+                              .collection("usersData")
+                              .doc(adminUid)
+                              .update({"Password": newPassword});
+
+                          Navigator.pop(context);
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Password Updated Successfully"),
+                            ),
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(
+                            context,
+                          ).showSnackBar(SnackBar(content: Text("Error: $e")));
+                        }
                       },
 
                       style: ElevatedButton.styleFrom(
@@ -454,6 +522,30 @@ class _SettingsPageState extends State<SettingsPage> {
                       ],
                     );
                   },
+                );
+              },
+            );
+          } else if (title == "Privacy") {
+            showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: const Text("Privacy & Terms"),
+                  content: const SingleChildScrollView(
+                    child: Text(
+                      "ScamTap collects account information and usage data "
+                      "to improve scam detection services. User information "
+                      "is stored securely and is not shared with third parties.",
+                    ),
+                  ),
+                  actions: [
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text("Close"),
+                    ),
+                  ],
                 );
               },
             );

@@ -24,12 +24,29 @@ class AuthService {
         idToken: googleAuth.idToken,
       );
 
+
       final userCredential = await _auth.signInWithCredential(credential);
+      final uid = userCredential.user?.uid;
+
+      if (uid != null) {
+        final userDoc = await _firestore.collection('usersData').doc(uid).get();
+
+        if (!userDoc.exists) {
+          await _firestore.collection('usersData').doc(uid).set({
+            'Username': googleUser.displayName ?? 'Google User',
+            'Email': googleUser.email,
+            'Password': '',
+            'Role': 'free user',
+            'RegisterDate': DateTime.now(),
+            'Profile Photo': googleUser.photoUrl ?? '',
+          });
+        }
+      }
 
       return AuthResult(
         success: true,
         message: 'Signed in successfully',
-        uid: userCredential.user?.uid,
+        uid: uid,
       );
     } catch (e) {
       return AuthResult(success: false, message: 'Google sign-in failed: $e');

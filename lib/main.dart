@@ -1,12 +1,14 @@
 import 'package:ScamTap/pages/free_users/home.dart';
+import 'pages/admin/admin_dashboard_page.dart';
 import 'package:ScamTap/widgets/navibar.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 import 'package:ScamTap/pages/free_users/login_page.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_ai/firebase_ai.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'firebase_options.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_ai/firebase_ai.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,7 +54,38 @@ class MyApp extends StatelessWidget {
             );
           }
           if (snapshot.hasData) {
-            return const Navibar();
+            return FutureBuilder<DocumentSnapshot>(
+              future: FirebaseFirestore.instance
+                  .collection('usersData')
+                  .doc(snapshot.data!.uid)
+                  .get(),
+
+              builder: (context, userSnapshot) {
+                if (userSnapshot.connectionState == ConnectionState.waiting) {
+                  return const Scaffold(
+                    body: Center(child: CircularProgressIndicator()),
+                  );
+                }
+
+                if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
+                  return const LoginPage();
+                }
+
+                Map<String, dynamic> data =
+                    userSnapshot.data!.data() as Map<String, dynamic>;
+
+                String role = data['Role'] ?? '';
+
+                String email = data['Email'] ?? '';
+
+                if (role == 'admin' &&
+                    email.toLowerCase() == 'admin@scamtap.com') {
+                  return const AdminDashboardPage();
+                }
+
+                return const Navibar();
+              },
+            );
           }
           return const LoginPage();
         },

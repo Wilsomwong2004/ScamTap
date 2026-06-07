@@ -33,10 +33,12 @@ class ManageUsersPage extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
 
-          var users = snapshot.data!.docs;
+          var users = snapshot.data!.docs.where((user) {
+            return user["Role"] != "suspended";
+          }).toList();
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
 
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,6 +63,8 @@ class ManageUsersPage extends StatelessWidget {
 
                 // FIREBASE USERS
                 ...users.map((user) {
+                  String userId = user.id;
+
                   String username = user["Username"] ?? "No Name";
 
                   String email = user["Email"] ?? "No Email";
@@ -80,6 +84,7 @@ class ManageUsersPage extends StatelessWidget {
 
                     child: userCard(
                       context: context,
+                      userId: userId,
                       name: username,
                       role: role,
                       email: email,
@@ -100,6 +105,7 @@ class ManageUsersPage extends StatelessWidget {
 
   Widget userCard({
     required BuildContext context,
+    required String userId,
     required String name,
     required String role,
     required String email,
@@ -236,10 +242,54 @@ class ManageUsersPage extends StatelessWidget {
 
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("$name removed successfully")),
+                  onPressed: () async {
+                    bool? confirm = await showDialog(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: const Text("Remove User"),
+                          content: Text("Are you sure want to remove $name ?"),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context, false);
+                              },
+                              child: const Text("Cancel"),
+                            ),
+
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context, true);
+                              },
+                              child: const Text(
+                                "Remove",
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     );
+
+                    if (confirm == true) {
+                      if (role == "admin") {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Admin account cannot be suspended"),
+                          ),
+                        );
+                        return;
+                      }
+
+                      await FirebaseFirestore.instance
+                          .collection("usersData")
+                          .doc(userId)
+                          .update({"Role": "suspended"});
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("$name suspended successfully")),
+                      );
+                    }
                   },
 
                   style: ElevatedButton.styleFrom(

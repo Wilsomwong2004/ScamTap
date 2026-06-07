@@ -26,14 +26,17 @@ class _LoginPageState extends State<LoginPage> {
       final result = await authService.signInWithGoogle();
 
       if (result.success) {
-        Navigator.pushReplacement(
+        Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => const Navibar()),
+          MaterialPageRoute(
+            builder: (context) => const Navibar(),
+          ),
+          (route) => false,
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result.message)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(result.message)));
       }
     } catch (e) {
       print(e);
@@ -109,7 +112,9 @@ class _LoginPageState extends State<LoginPage> {
                         onTap: () async {
                           if (emailController.text.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Enter your email first")),
+                              const SnackBar(
+                                content: Text("Enter your email first"),
+                              ),
                             );
                             return;
                           }
@@ -118,11 +123,15 @@ class _LoginPageState extends State<LoginPage> {
                               email: emailController.text.trim(),
                             );
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Password reset email sent")),
+                              const SnackBar(
+                                content: Text("Password reset email sent"),
+                              ),
                             );
                           } catch (e) {
+                            print("RESET PASSWORD ERROR: $e");
+
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Failed to send reset email")),
+                              SnackBar(content: Text(e.toString())),
                             );
                           }
                         },
@@ -209,14 +218,15 @@ class _LoginPageState extends State<LoginPage> {
                         //     );
                         //   }
                         // },
-
                         onPressed: () async {
                           String input = emailController.text.trim();
                           String password = passwordController.text.trim();
 
                           if (input.isEmpty || password.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Please fill all fields")),
+                              const SnackBar(
+                                content: Text("Please fill all fields"),
+                              ),
                             );
                             return;
                           }
@@ -233,7 +243,9 @@ class _LoginPageState extends State<LoginPage> {
 
                               if (query.docs.isEmpty) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text("Username not found")),
+                                  const SnackBar(
+                                    content: Text("Username not found"),
+                                  ),
                                 );
                                 return;
                               }
@@ -241,7 +253,10 @@ class _LoginPageState extends State<LoginPage> {
                             }
 
                             final userCredential = await FirebaseAuth.instance
-                                .signInWithEmailAndPassword(email: email, password: password);
+                                .signInWithEmailAndPassword(
+                                  email: email,
+                                  password: password,
+                                );
 
                             final uid = userCredential.user!.uid;
 
@@ -250,31 +265,77 @@ class _LoginPageState extends State<LoginPage> {
                                 .doc(uid)
                                 .get();
 
-                            String role = doc.data()?['Role'] ?? 'user';
+                            print("UID FROM AUTH = $uid");
+                            print("DOC EXISTS = ${doc.exists}");
+                            print("DOC DATA = ${doc.data()}");
 
-                            if (role == "admin") {
+                            if (!doc.exists) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("User record not found"),
+                                ),
+                              );
+                              return;
+                            }
+
+                            String role = doc.data()?['Role'] ?? '';
+                            String userEmail = doc.data()?['Email'] ?? '';
+
+                            print("ROLE = $role");
+                            print("EMAIL = $userEmail");
+
+                            // SUSPENDED USER
+                            if (role == "suspended") {
+                              await FirebaseAuth.instance.signOut();
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    "Your account has been suspended by admin",
+                                  ),
+                                ),
+                              );
+
+                              return;
+                            }
+
+                            if (role == "admin" &&
+                                userEmail.toLowerCase() ==
+                                    "admin@scamtap.com") {
                               Navigator.pushAndRemoveUntil(
                                 context,
-                                MaterialPageRoute(builder: (context) => const AdminDashboardPage()),
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const AdminDashboardPage(),
+                                ),
                                 (route) => false,
                               );
                             } else {
                               await PremiumService.refreshPremiumStatus();
                               Navigator.pushAndRemoveUntil(
                                 context,
-                                MaterialPageRoute(builder: (context) => const Navibar()),
+                                MaterialPageRoute(
+                                  builder: (context) => const Navibar(),
+                                ),
                                 (route) => false,
                               );
                             }
                           } catch (e) {
                             print(e);
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Invalid credentials")),
+                              const SnackBar(
+                                content: Text("Invalid credentials"),
+                              ),
                             );
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromARGB(255, 44, 106, 46),
+                          backgroundColor: const Color.fromARGB(
+                            255,
+                            44,
+                            106,
+                            46,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
                           ),
@@ -320,7 +381,9 @@ class _LoginPageState extends State<LoginPage> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const RegisterPage()),
+                          MaterialPageRoute(
+                            builder: (context) => const RegisterPage(),
+                          ),
                         );
                       },
                       child: const Text(
